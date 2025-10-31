@@ -1,40 +1,45 @@
 #include <Arduino.h>
-#include "constants.h"
-#include "DeckLight.h"
-#include "AudioProc.h"
+#include "AudioOut.h"
 
+AudioOut* audioOut;
+
+TaskHandle_t DeviceTask;
 TaskHandle_t AudioTask;
-TaskHandle_t MidiTask;
 
-DeckLight deckLight;
-AudioProc audioProc;
-
-// Task functions
-void ProcessAudio(void *parameter);
+void ProcessDevices(void* parameter);
+void ProcessAudio(void* parameter);
 
 void setup()
 {
   Serial.begin(115200);
-    
-  deckLight.Setup();
   
-  xTaskCreatePinnedToCore(ProcessAudio, "Audio", 10000, NULL, 1, &AudioTask, 0);  
+  audioOut = new AudioOut();
+  audioOut->Setup();
+  audioOut->StartRadio();
+
+  xTaskCreatePinnedToCore(ProcessAudio, "Audio", 10000, NULL, 1, &AudioTask, 0);
+  xTaskCreatePinnedToCore(ProcessDevices, "Device", 10000, NULL, 1, &DeviceTask, 1);
 }
 
 void loop()
 {
-  // All processing in tasks
+  // All processing is done in the tasks  
 }
 
-void ProcessAudio(void *parameter)
+void ProcessDevices(void* parameter)
 {
-  Serial.print("Audio task running on core ");
-  Serial.println(xPortGetCoreID());
   for (;;)
   {
-    deckLight.Tick();
-    audioProc.Analyse([](){deckLight.Tick();});    
-    deckLight.DisplayAudio(audioProc.bandValues);
+    // todo: add device processing here
+    vTaskDelay(1);
+  }
+}
+
+void ProcessAudio(void* parameter)
+{
+  for (;;)
+  {
+    audioOut->Tick();
     vTaskDelay(1);
   }
 }
