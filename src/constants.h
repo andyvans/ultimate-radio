@@ -10,3 +10,10 @@
 #define ENCODER_PIN_A 5
 #define ENCODER_PIN_B 6
 #define ENCODER_PIN_SWITCH 7
+
+// VU meter bands
+#define NUM_BANDS 3
+
+// LED matrix
+#define LED_MATRIX_PIN 4
+#define LED_VOLTS 5

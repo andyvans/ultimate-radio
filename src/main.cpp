@@ -1,9 +1,11 @@
 #include <Arduino.h>
 #include "AudioOut.h"
 #include "DeviceControls.h"
+#include "DeckLight.h"
 
 AudioOut* audioOut;
 DeviceControls* deviceControls;
+DeckLight* deckLight;
 
 TaskHandle_t DeviceTask;
 TaskHandle_t AudioTask;
@@ -17,9 +19,12 @@ void setup()
   
   audioOut = new AudioOut();
   audioOut->Setup();
+
+  deckLight = new DeckLight();
+  deckLight->Setup();
   
   deviceControls = new DeviceControls();
-  deviceControls->Setup(audioOut);
+  deviceControls->Setup(audioOut, deckLight);
 
   xTaskCreatePinnedToCore(ProcessAudio, "Audio", 10000, NULL, 1, &AudioTask, 0);
   xTaskCreatePinnedToCore(ProcessDevices, "Device", 10000, NULL, 1, &DeviceTask, 1);

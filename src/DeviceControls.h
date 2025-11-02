@@ -2,19 +2,25 @@
 #include <Arduino.h>
 #include "OneRotaryEncoder.h"
 #include "constants.h"
-
-class AudioOut; // Forward declaration
+#include "DeckLight.h"
+#include "AudioOut.h"
 
 class DeviceControls
 {
 public:
     DeviceControls();
-    void Setup(AudioOut* audio);
+    void Setup(AudioOut* audio, DeckLight* deckLight);
     void Tick();
     OneRotaryEncoder* GetEncoder();
 
 private:
-    OneRotaryEncoder* encoder;
-    AudioOut* audioOut;
-    int currentChannel;
+    void ChangeChannel(int channel);
+
+    int _currentChannel;
+    int _pendingChannel;
+    unsigned long _lastPositionChangeTime;
+    bool _hasPendingChange;
+    OneRotaryEncoder* _encoder;
+    AudioOut* _audioOut;
+    DeckLight* _deckLight;
 };

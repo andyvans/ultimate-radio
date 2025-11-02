@@ -83,9 +83,9 @@ void AudioOut::StartRadio(int channel)
 
     out->begin(configOut);
 
-    Serial.print("Starting radio stream (channel ");
+    Serial.print("Starting radio stream (");
     Serial.print(channel);
-    Serial.print("): ");
+    Serial.print(") ");
     Serial.println(channels[channel].url);
 
     urlStream = new URLStream(WIFI_SSID, WIFI_PASSWORD);

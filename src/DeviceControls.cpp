@@ -1,21 +1,22 @@
 #include "DeviceControls.h"
 #include "AudioOut.h"
 
-DeviceControls::DeviceControls() : audioOut(nullptr), currentChannel(0)
+DeviceControls::DeviceControls() : _audioOut(nullptr), _currentChannel(0), _pendingChannel(-1), _lastPositionChangeTime(0), _hasPendingChange(false)
 {
 }
 
-void DeviceControls::Setup(AudioOut* audio)
+void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
 {
-    audioOut = audio;
-    currentChannel = 0;
+    _audioOut = audioOut;
+    _deckLight = deckLight;
+    _currentChannel = 0;
     
     // Create rotary encoder instance
     // Max value is maxChannels - 1 since we're using 0-based indexing
     int initialChannel = 0;
-    int maxChannel = audioOut != nullptr ? audioOut->GetChannelCount() - 1 : 0;    
+    int maxChannel = _audioOut != nullptr ? _audioOut->GetChannelCount() - 1 : 0;
     
-    encoder = new OneRotaryEncoder(
+    _encoder = new OneRotaryEncoder(
         ENCODER_PIN_A,
         ENCODER_PIN_B,
         ENCODER_PIN_SWITCH,
@@ -25,30 +26,36 @@ void DeviceControls::Setup(AudioOut* audio)
     );
 
     // Start first radio channel by default
-    audioOut->StartRadio(initialChannel); 
+    _audioOut->StartRadio(initialChannel); 
 }
 
 void DeviceControls::Tick()
 {
-    if (encoder == nullptr) return;
+    if (_encoder == nullptr) return;
 
-    encoder->Tick();
+    _encoder->Tick();
 
     // Check for position changes
-    EncoderPositionState posState = encoder->GetPosition();
-    if (posState.hasNewPosition && posState.position != currentChannel)
+    EncoderPositionState posState = _encoder->GetPosition();
+    if (posState.hasNewPosition && posState.position != _currentChannel)
     {
-        currentChannel = posState.position;
-        Serial.print("Changing to channel: ");
-        Serial.println(currentChannel);
-            
-        // Stop current stream and start new channel
-        audioOut->Stop();
-        audioOut->StartRadio(currentChannel);
+        // New position detected - update pending channel and reset timer
+        _pendingChannel = posState.position;
+        _lastPositionChangeTime = millis();
+        _hasPendingChange = true;
+        _deckLight->DisplayLine(_pendingChannel);
+    }
+
+    // Check if we should apply the pending channel change (500ms stability)
+    if (_hasPendingChange && (millis() - _lastPositionChangeTime >= 500))
+    {
+        _currentChannel = _pendingChannel;
+        _hasPendingChange = false;
+        ChangeChannel(_currentChannel);
     }
 
     // Check for button presses
-    EncoderSwitchState switchState = encoder->GetSwitchState();
+    EncoderSwitchState switchState = _encoder->GetSwitchState();
     if (switchState.hasNewState)
     {
         switch (switchState.state)
@@ -68,7 +75,18 @@ void DeviceControls::Tick()
     }    
 }
 
+void DeviceControls::ChangeChannel(int channel)
+{
+    if (_audioOut == nullptr) return;
+
+    // Stop current stream and start new channel
+    Serial.print("Changing to channel: ");
+    Serial.println(_currentChannel);
+    _audioOut->Stop();
+    _audioOut->StartRadio(_currentChannel);
+}
+
 OneRotaryEncoder* DeviceControls::GetEncoder()
 {
-    return encoder;
+    return _encoder;
 }
