@@ -32,6 +32,7 @@ int AudioOut::GetChannelCount()
 
 void AudioOut::Stop()
 {
+    isPlaying = false;
     if (copier != nullptr)
     {
         copier->end();
@@ -95,10 +96,11 @@ void AudioOut::StartRadio(int channel)
 
     urlStream->begin(channels[channel].url, channels[channel].mimeType);
     decodedStream->begin();
+    isPlaying = true;
 }
 
 void AudioOut::Tick()
 {
-    if (copier == nullptr) return;
+    if (copier == nullptr || !isPlaying) return;
     copier->copy();
 }
