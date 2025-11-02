@@ -5,7 +5,13 @@
 // Define the array of radio channels
 const RadioChannel AudioOut::channels[] = {
     {"http://stream.srg-ssr.ch/m/rsj/mp3_128", "audio/mp3"},
-    // Add more channels here as needed
+    {"http://stream.srg-ssr.ch/m/rsc_de/mp3_128", "audio/mp3"},
+    {"http://jazz-wr11.ice.infomaniak.ch/jazz-wr11-128.mp3", "audio/mp3"},
+    {"http://stream.srg-ssr.ch/m/drsvirus/mp3_128", "audio/mp3"},
+    {"https://radionz-ice.streamguys.com/national.mp3", "audio/mp3"},
+    {"http://stream.srg-ssr.ch/m/couleur3/mp3_128", "audio/mp3"},
+    {"http://stream.srg-ssr.ch/m/rr/mp3_128", "audio/mp3"},
+    {"http://sc2.radiocaroline.net/;?type=http&nocache=3741", "audio/mp3"}
 };
 
 const int AudioOut::channelCount = sizeof(AudioOut::channels) / sizeof(AudioOut::channels[0]);
@@ -17,6 +23,11 @@ AudioOut::AudioOut()
 void AudioOut::Setup()
 {
     AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Warning);
+}
+
+int AudioOut::GetChannelCount()
+{
+    return channelCount;
 }
 
 void AudioOut::Stop()
@@ -76,7 +87,7 @@ void AudioOut::StartRadio(int channel)
     Serial.print(channel);
     Serial.print("): ");
     Serial.println(channels[channel].url);
-    
+
     urlStream = new URLStream(WIFI_SSID, WIFI_PASSWORD);
     resampler = new ResampleStream(*out);
     decodedStream = new EncodedAudioStream(resampler, new MP3DecoderHelix());

@@ -1,7 +1,9 @@
 #include <Arduino.h>
 #include "AudioOut.h"
+#include "DeviceControls.h"
 
 AudioOut* audioOut;
+DeviceControls* deviceControls;
 
 TaskHandle_t DeviceTask;
 TaskHandle_t AudioTask;
@@ -15,7 +17,9 @@ void setup()
   
   audioOut = new AudioOut();
   audioOut->Setup();
-  audioOut->StartRadio();
+  
+  deviceControls = new DeviceControls();
+  deviceControls->Setup(audioOut);
 
   xTaskCreatePinnedToCore(ProcessAudio, "Audio", 10000, NULL, 1, &AudioTask, 0);
   xTaskCreatePinnedToCore(ProcessDevices, "Device", 10000, NULL, 1, &DeviceTask, 1);
@@ -30,7 +34,7 @@ void ProcessDevices(void* parameter)
 {
   for (;;)
   {
-    // todo: add device processing here
+    deviceControls->Tick();
     vTaskDelay(1);
   }
 }

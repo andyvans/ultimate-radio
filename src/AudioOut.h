@@ -20,6 +20,7 @@ public:
     void StartRadio(int channel = 0);
     void Stop();
     void Tick();
+    int GetChannelCount();
 
 private:
     AudioInfo* infoFrom;

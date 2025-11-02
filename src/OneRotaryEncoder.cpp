@@ -78,17 +78,24 @@ EncoderSwitchState OneRotaryEncoder::GetSwitchState()
 void OneRotaryEncoder::Tick()
 {  
   encoder.tick();   
-  long newPosition = encoder.getPosition() * rotarySteps;
+  long encoderPos = encoder.getPosition();
+  long newPosition = encoderPos * rotarySteps;
+  
   if (newPosition < rotaryMin)
   {
-    encoder.setPosition(rotaryMin/rotarySteps);
-    newPosition = rotaryMin;
+    encoderPos = rotaryMin / rotarySteps;
+    encoder.setPosition(encoderPos);
+    newPosition = encoderPos * rotarySteps;
   }
-
-  if (newPosition > rotaryMax)
+  else if (newPosition > rotaryMax)
   {
-    encoder.setPosition(rotaryMax/rotarySteps);
-    newPosition = rotaryMax;
+    encoderPos = (rotaryMax + rotarySteps - 1) / rotarySteps; // Round up to ensure we can reach max
+    encoder.setPosition(encoderPos);
+    newPosition = encoderPos * rotarySteps;
+    if (newPosition > rotaryMax)
+    {
+      newPosition = rotaryMax; // Clamp to actual max
+    }
   }
   
   if (lastPosition != newPosition)
