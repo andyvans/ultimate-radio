@@ -12,25 +12,37 @@ struct RadioChannel
     const char* mimeType;
 };
 
+enum AudioMode
+{
+    AUDIO_MODE_OFF,
+    AUDIO_MODE_RADIO,
+};
+
 class AudioOut
 {
 public:
     AudioOut();
     void Setup();
-    void StartRadio(int channel = 0);
-    void Stop();
+    void StopAudio();
+    void StartRadio(int channel);
     void Tick();
     int GetChannelCount();
 
 private:
-    AudioInfo* infoFrom;
-    URLStream* urlStream;
-    ResampleStream* resampler;
-    EncodedAudioStream* decodedStream;
+    void StartRadioStream();
+    void Stop();
 
-    AudioStream* in;
-    I2SStream* out;
-    StreamCopy* copier;
+    AudioMode _mode;
+    int _currentChannel;
+    bool _isPlaying;
+
+    AudioInfo* _infoFrom;
+    URLStream* _urlStream;
+    ResampleStream* _resampler;
+    EncodedAudioStream* _decodedStream;
+    AudioStream* _in;
+    I2SStream* _out;
+    StreamCopy* _copier;
 
     static const RadioChannel channels[];
     static const int channelCount;

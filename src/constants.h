@@ -2,18 +2,18 @@
 #define MIC_PIN 35
 
 // I2S audio out pins
-#define I2S_DATA_OUT 22
-#define I2S_BCLK_OUT 14
-#define I2S_LRC_OUT 21
+#define I2S_LRC_OUT 5
+#define I2S_DATA_OUT 6
+#define I2S_BCLK_OUT 7
 
 // Rotary encoder pins
-#define ENCODER_PIN_A 5
-#define ENCODER_PIN_B 6
-#define ENCODER_PIN_SWITCH 7
+#define ENCODER_PIN_A 17
+#define ENCODER_PIN_B 16
+#define ENCODER_PIN_SWITCH 15
 
 // VU meter bands
 #define NUM_BANDS 3
 
 // LED matrix
-#define LED_MATRIX_PIN 4
+#define LED_MATRIX_PIN 8
 #define LED_VOLTS 5

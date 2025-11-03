@@ -26,6 +26,7 @@ void setup()
   deviceControls = new DeviceControls();
   deviceControls->Setup(audioOut, deckLight);
 
+  Serial.println("Creating tasks");
   xTaskCreatePinnedToCore(ProcessAudio, "Audio", 10000, NULL, 1, &AudioTask, 0);
   xTaskCreatePinnedToCore(ProcessDevices, "Device", 10000, NULL, 1, &DeviceTask, 1);
 }
