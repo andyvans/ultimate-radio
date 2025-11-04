@@ -14,23 +14,23 @@ const int DeckLight::BrightnessSettings[] = {60, 30, 10};
 
 DeckLight::DeckLight()
 {  
-  matrix = new FastLED_NeoMatrix(matrixLeds, DeckLightMatrixWidth, DeckLightMatrixHeight, 
-    NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_ROWS + NEO_MATRIX_ZIGZAG + NEO_TILE_TOP + NEO_TILE_LEFT + NEO_TILE_ROWS);
+  //matrix = new FastLED_NeoMatrix(matrixLeds, DeckLightMatrixWidth, DeckLightMatrixHeight, 
+  //  NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_ROWS + NEO_MATRIX_ZIGZAG + NEO_TILE_TOP + NEO_TILE_LEFT + NEO_TILE_ROWS);
 }
 
 void DeckLight::Setup()
 {
   Serial.println("Setting up DeckLight");
-  
+
   // Careful with the amount of power here if running off USB port
   const int MaxMilliAmps = 400; 
 
   // Setup LED matrix
   // WS2812B is the chip type, GRB is the colour order
-  FastLED.addLeds<WS2812B, LED_MATRIX_PIN, EOrder::GRB>(matrixLeds, DeckLightLedCount).setCorrection(TypicalSMD5050);
-  FastLED.setMaxPowerInVoltsAndMilliamps(LED_VOLTS, MaxMilliAmps);
-  FastLED.setBrightness(BrightnessSettings[1]);
-  FastLED.clear();
+  //FastLED.addLeds<WS2812B, LED_MATRIX_PIN, EOrder::GRB>(matrixLeds, DeckLightLedCount).setCorrection(TypicalSMD5050);
+  //FastLED.setMaxPowerInVoltsAndMilliamps(LED_VOLTS, MaxMilliAmps);
+  //FastLED.setBrightness(BrightnessSettings[1]);
+  //FastLED.clear();
 }
 
 void DeckLight::DisplayAudio(int bandValues[])

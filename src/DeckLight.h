@@ -2,6 +2,8 @@
 
 #include "constants.h"
 #include <OneButton.h>
+
+#define FASTLED_ALLOW_INTERRUPTS 0
 #include <FastLED_NeoMatrix.h>
 
 #define DeckLightLedCount 24

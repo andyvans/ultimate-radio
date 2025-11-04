@@ -106,8 +106,9 @@ AudioOut::AudioOut()
 void AudioOut::Setup()
 {
     Serial.println("Setting up AudioOut");
-    AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Warning);
+    AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Info);
 
+    /*
     // Initialize WiFi with event handler
     Serial.println("[WiFi] Initializing WiFi...");
     WiFi.onEvent(WiFiEvent);
@@ -201,6 +202,7 @@ void AudioOut::Setup()
         Serial.print("[WiFi] Final status: ");
         Serial.println(WiFi.status());
     }
+    */
 }
 
 int AudioOut::GetChannelCount()
@@ -228,6 +230,7 @@ void AudioOut::Stop()
 
 void AudioOut::Tick()
 {
+    /*
     // Monitor WiFi status periodically
     static unsigned long lastWiFiCheck = 0;
     const unsigned long wifiCheckInterval = 10000; // Check every 10 seconds
@@ -260,6 +263,8 @@ void AudioOut::Tick()
             }
         }
     }
+    return;
+    */
 
     if (_mode == AUDIO_MODE_OFF && _isPlaying)
     {
@@ -313,7 +318,7 @@ void AudioOut::StopAudio()
 void AudioOut::StartRadioStream()
 {
     Serial.println("Starting I2S output");
-    _infoFrom = new AudioInfo(44100, 1, 16);
+    _infoFrom = new AudioInfo(44100, 2, 16);
 
     _out = new I2SStream();
     auto configOut = _out->defaultConfig(TX_MODE);
