@@ -15,7 +15,7 @@ const int AudioOut::channelCount = sizeof(AudioOut::channels) / sizeof(AudioOut:
 
 AudioOut::AudioOut()
 {
-    _currentChannel = -1;
+    _currentChannel = 0;
     _mode = AUDIO_MODE_OFF;
     _isPlaying = false;
 }

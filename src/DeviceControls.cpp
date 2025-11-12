@@ -24,7 +24,6 @@ void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
     int initialChannel = 0;
     int maxChannel = _audioOut != nullptr ? _audioOut->GetChannelCount() - 1 : 0;
 
-    /*
     _encoder = new OneRotaryEncoder(
         ENCODER_PIN_A,
         ENCODER_PIN_B,
@@ -33,7 +32,7 @@ void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
         0, // Set min value
         maxChannel // Set max value
     );
-    */
+
     // Start first radio channel by default
     Serial.print("Starting initial channel: ");
     Serial.println(initialChannel);

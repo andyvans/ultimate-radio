@@ -3,8 +3,8 @@
 
 // I2S audio out pins
 #define I2S_LRC_OUT 7
-#define I2S_DATA_OUT 8
-#define I2S_BCLK_OUT 16
+#define I2S_DATA_OUT 6
+#define I2S_BCLK_OUT 5
 
 // Rotary encoder pins
 #define ENCODER_PIN_A 17
