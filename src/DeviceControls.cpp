@@ -1,7 +1,7 @@
 #include "DeviceControls.h"
 #include "AudioOut.h"
 
-DeviceControls::DeviceControls() : 
+DeviceControls::DeviceControls() :
     _audioOut(nullptr),
     _currentChannel(0),
     _pendingChannel(-1),
@@ -18,12 +18,12 @@ void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
     _currentChannel = 0;
 
     Serial.println("Setting up DeviceControls");
-    
+
     // Create rotary encoder instance
     // Max value is maxChannels - 1 since we're using 0-based indexing
     int initialChannel = 0;
     int maxChannel = _audioOut != nullptr ? _audioOut->GetChannelCount() - 1 : 0;
-    
+
     /*
     _encoder = new OneRotaryEncoder(
         ENCODER_PIN_A,
@@ -37,7 +37,7 @@ void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
     // Start first radio channel by default
     Serial.print("Starting initial channel: ");
     Serial.println(initialChannel);
-    _audioOut->StartRadio(initialChannel);
+    _audioOut->Start(initialChannel);
 }
 
 void DeviceControls::Tick()
@@ -71,30 +71,25 @@ void DeviceControls::Tick()
     {
         switch (switchState.state)
         {
-            case EncoderSwitchPress::Clicked:
-                Serial.println("Encoder button clicked");
-                break;
-            case EncoderSwitchPress::DoubleClicked:
-                Serial.println("Encoder button double-clicked");
-                break;
-            case EncoderSwitchPress::LongPressed:
-                Serial.println("Encoder button long-pressed");
-                break;
-            default:
-                break;
+        case EncoderSwitchPress::Clicked:
+            Serial.println("Encoder button clicked");
+            break;
+        case EncoderSwitchPress::DoubleClicked:
+            Serial.println("Encoder button double-clicked");
+            break;
+        case EncoderSwitchPress::LongPressed:
+            Serial.println("Encoder button long-pressed");
+            break;
+        default:
+            break;
         }
-    }    
+    }
 }
 
 void DeviceControls::ChangeChannel(int channel)
 {
     if (_audioOut == nullptr) return;
-
-    // Stop current stream and start new channel
-    Serial.print("Changing to channel: ");
-    Serial.println(_currentChannel);
-    _audioOut->StopAudio();
-    _audioOut->StartRadio(_currentChannel);
+    _audioOut->Start(_currentChannel);
 }
 
 OneRotaryEncoder* DeviceControls::GetEncoder()

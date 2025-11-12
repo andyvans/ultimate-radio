@@ -3,6 +3,8 @@
 #include "Constants.h"
 #include <AudioTools.h>
 #include <AudioTools/Communication/AudioHttp.h>
+#include <AudioTools/Disk/AudioSourceURL.h>
+#include <AudioTools/AudioCodecs/CodecMP3Helix.h>
 
 using namespace audio_tools;
 
@@ -23,27 +25,22 @@ class AudioOut
 public:
     AudioOut();
     void Setup();
-    void StopAudio();
-    void StartRadio(int channel);
+    void Stop();
+    void Start(int channel);
     void Tick();
     int GetChannelCount();
 
 private:
-    void StartRadioStream();
-    void Stop();
-
     AudioMode _mode;
     int _currentChannel;
     bool _isPlaying;
 
-    AudioInfo* _infoFrom;
     URLStream* _urlStream;
-    ResampleStream* _resampler;
-    EncodedAudioStream* _decodedStream;
-    AudioStream* _in;
-    I2SStream* _out;
-    StreamCopy* _copier;
+    AudioSourceURL* _audioSourceUrl;
+    I2SStream* _i2sOut;
+    MP3DecoderHelix* _mp3Decoder;
+    AudioPlayer* _audioPlayer;
 
-    static const RadioChannel channels[];
+    static const char* channels[];
     static const int channelCount;
 };

@@ -16,13 +16,13 @@ void ProcessAudio(void* parameter);
 void setup()
 {
   Serial.begin(115200);
-  
+
   audioOut = new AudioOut();
   audioOut->Setup();
 
   deckLight = new DeckLight();
   deckLight->Setup();
-  
+
   deviceControls = new DeviceControls();
   deviceControls->Setup(audioOut, deckLight);
 
@@ -33,7 +33,7 @@ void setup()
 
 void loop()
 {
-  // All processing is done in the tasks  
+  // All processing is done in the tasks
 }
 
 void ProcessDevices(void* parameter)
