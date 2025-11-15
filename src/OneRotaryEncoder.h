@@ -30,10 +30,10 @@ public:
     EncoderSwitchState GetSwitchState();
 
 private:
-    OneButton button;
-    RotaryEncoder encoder;
+    OneButton* button;
+    RotaryEncoder* encoder;
 
-    int lastPosition = -1;    
+    int lastPosition = -1;
     EncoderSwitchPress switchState = EncoderSwitchPress::None;
 
     bool hasNewSwitchState = false;
@@ -44,7 +44,7 @@ private:
     void LongPressed();
     int CalculateAcceleration(int oldPos, int newPos);
 
-    int rotarySteps = 8;
+    int rotarySteps = 1;
     int rotaryInitial = 64;
     int rotaryMin = 0;
     int rotaryMax = 128;

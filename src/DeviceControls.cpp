@@ -17,8 +17,7 @@ void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
     _deckLight = deckLight;
     _currentChannel = 0;
 
-    Serial.println("Setting up DeviceControls");
-
+    Serial.println("=== Setting up DeviceControls ===");
     // Create rotary encoder instance
     // Max value is maxChannels - 1 since we're using 0-based indexing
     int initialChannel = 0;
@@ -35,8 +34,9 @@ void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
 
     // Start first radio channel by default
     Serial.print("Starting initial channel: ");
-    Serial.println(initialChannel);
+    Serial.println(initialChannel);    
     _audioOut->Start(initialChannel);
+    
 }
 
 void DeviceControls::Tick()
@@ -53,7 +53,6 @@ void DeviceControls::Tick()
         _pendingChannel = posState.position;
         _lastPositionChangeTime = millis();
         _hasPendingChange = true;
-        _deckLight->DisplayLine(_pendingChannel);
     }
 
     // Check if we should apply the pending channel change (500ms stability)
@@ -61,7 +60,11 @@ void DeviceControls::Tick()
     {
         _currentChannel = _pendingChannel;
         _hasPendingChange = false;
-        ChangeChannel(_currentChannel);
+        Serial.print("Changing to channel: ");
+        Serial.println(_currentChannel);
+
+        _audioOut->Start(_currentChannel);
+        //_deckLight->DisplayLine(_pendingChannel);
     }
 
     // Check for button presses
@@ -83,15 +86,4 @@ void DeviceControls::Tick()
             break;
         }
     }
-}
-
-void DeviceControls::ChangeChannel(int channel)
-{
-    if (_audioOut == nullptr) return;
-    _audioOut->Start(_currentChannel);
-}
-
-OneRotaryEncoder* DeviceControls::GetEncoder()
-{
-    return _encoder;
 }

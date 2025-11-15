@@ -33,6 +33,7 @@ public:
 private:
     AudioMode _mode;
     int _currentChannel;
+    int _pendingChannel;
     bool _isPlaying;
 
     URLStream* _urlStream;

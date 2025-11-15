@@ -11,11 +11,8 @@ public:
     DeviceControls();
     void Setup(AudioOut* audio, DeckLight* deckLight);
     void Tick();
-    OneRotaryEncoder* GetEncoder();
 
 private:
-    void ChangeChannel(int channel);
-
     int _currentChannel;
     int _pendingChannel;
     unsigned long _lastPositionChangeTime;

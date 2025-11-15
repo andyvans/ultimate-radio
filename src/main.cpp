@@ -7,15 +7,20 @@ AudioOut* audioOut;
 DeviceControls* deviceControls;
 DeckLight* deckLight;
 
-TaskHandle_t DeviceTask;
-TaskHandle_t AudioTask;
+TaskHandle_t AudioTask = NULL;
+TaskHandle_t DeviceTask = NULL;
+
 
 void ProcessDevices(void* parameter);
 void ProcessAudio(void* parameter);
 
 void setup()
 {
-  Serial.begin(115200);
+  // Initialize UART0 explicitly with TX=43, RX=44 (ESP32-S3 defaults)
+  Serial.begin(115200, SERIAL_8N1, -1, -1);
+  delay(200);
+
+  Serial.println("\n\n=== Ultimate Radio Starting ===");
 
   audioOut = new AudioOut();
   audioOut->Setup();
@@ -27,21 +32,42 @@ void setup()
   deviceControls->Setup(audioOut, deckLight);
 
   Serial.println("Creating tasks");
-  xTaskCreatePinnedToCore(ProcessAudio, "Audio", 10000, NULL, 1, &AudioTask, 0);
-  xTaskCreatePinnedToCore(ProcessDevices, "Device", 10000, NULL, 1, &DeviceTask, 1);
+
+  xTaskCreatePinnedToCore(
+    ProcessDevices,
+    "Device",
+    2048,
+    NULL,
+    1,
+    &DeviceTask,
+    0); // Core 0 (shared with WiFi & system tasks)
+
+  xTaskCreatePinnedToCore(
+    ProcessAudio,
+    "Audio",
+    8192, // Stack size (8KB for audio processing)
+    NULL,
+    12, // High priority for smooth audio
+    &AudioTask,
+    1); // Core 1 for audio processing 
+
+  Serial.println("=== Audio task created on Core 1 ===");
 }
 
 void loop()
 {
-  // All processing is done in the tasks
+  // Empty. All processing is done in tasks.
 }
 
 void ProcessDevices(void* parameter)
 {
   for (;;)
   {
-    deviceControls->Tick();
-    vTaskDelay(1);
+    if (deviceControls != nullptr)
+    {
+      deviceControls->Tick();
+    }
+    vTaskDelay(1 / portTICK_PERIOD_MS);
   }
 }
 
@@ -49,7 +75,10 @@ void ProcessAudio(void* parameter)
 {
   for (;;)
   {
-    audioOut->Tick();
-    vTaskDelay(1);
+    if (audioOut != nullptr)
+    {
+      audioOut->Tick();
+    }
+    vTaskDelay(1 / portTICK_PERIOD_MS);
   }
 }

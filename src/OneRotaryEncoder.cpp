@@ -1,24 +1,26 @@
 #include "OneRotaryEncoder.h"
 
 OneRotaryEncoder::OneRotaryEncoder(int pinA, int pinB, int initialValue, int minValue, int maxValue)
-    : encoder(pinA, pinB, RotaryEncoder::LatchMode::TWO03)
 {
-  rotaryInitial = initialValue;
+  encoder = new RotaryEncoder(pinA, pinB, RotaryEncoder::LatchMode::TWO03);
+  button = nullptr;
+  rotaryInitial = initialValue;  
   rotaryMin = minValue;
   rotaryMax = maxValue;
   SetPosition(initialValue);
 }
 
 OneRotaryEncoder::OneRotaryEncoder(int pinA, int pinB, int pinSwitch, int initialValue, int minValue, int maxValue)
-    : encoder(pinA, pinB, RotaryEncoder::LatchMode::TWO03), button(pinSwitch)
 {
+  encoder = new RotaryEncoder(pinA, pinB, RotaryEncoder::LatchMode::TWO03);
+  button = new OneButton(pinSwitch, true, true);
   rotaryInitial = initialValue;
   rotaryMin = minValue;
   rotaryMax = maxValue;
   SetPosition(initialValue);
 
-  button.attachClick([](void *scope) { ((OneRotaryEncoder *) scope)->Clicked();}, this);
-  button.attachLongPressStart([](void *scope) { ((OneRotaryEncoder *) scope)->LongPressed();}, this);  
+  button->attachClick([](void *scope) { ((OneRotaryEncoder *) scope)->Clicked();}, this);
+  button->attachLongPressStart([](void *scope) { ((OneRotaryEncoder *) scope)->LongPressed();}, this);
 }
 
 void OneRotaryEncoder::Clicked()
@@ -52,7 +54,7 @@ void OneRotaryEncoder::LongPressed()
 
 void OneRotaryEncoder::SetPosition(int position)
 {
-  encoder.setPosition(position/rotarySteps);
+  encoder->setPosition(position/rotarySteps);
   lastPosition = position;
   hasNewPosition = true;
 }
@@ -77,20 +79,20 @@ EncoderSwitchState OneRotaryEncoder::GetSwitchState()
 
 void OneRotaryEncoder::Tick()
 {  
-  encoder.tick();   
-  long encoderPos = encoder.getPosition();
+  encoder->tick();   
+  long encoderPos = encoder->getPosition();
   long newPosition = encoderPos * rotarySteps;
   
   if (newPosition < rotaryMin)
   {
     encoderPos = rotaryMin / rotarySteps;
-    encoder.setPosition(encoderPos);
+    encoder->setPosition(encoderPos);
     newPosition = encoderPos * rotarySteps;
   }
   else if (newPosition > rotaryMax)
   {
     encoderPos = (rotaryMax + rotarySteps - 1) / rotarySteps; // Round up to ensure we can reach max
-    encoder.setPosition(encoderPos);
+    encoder->setPosition(encoderPos);
     newPosition = encoderPos * rotarySteps;
     if (newPosition > rotaryMax)
     {
@@ -100,9 +102,11 @@ void OneRotaryEncoder::Tick()
   
   if (lastPosition != newPosition)
   {
+    Serial.print("Encoder position changed: ");
+    Serial.println(newPosition);
     lastPosition = newPosition;
     hasNewPosition = true;    
   }
 
-  button.tick();
+  if (button != nullptr) button->tick();
 }
