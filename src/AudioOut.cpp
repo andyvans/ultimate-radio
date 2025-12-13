@@ -48,6 +48,8 @@ void AudioOut::Setup()
     configOut.pin_ws = I2S_LRC_OUT;
     configOut.pin_data = I2S_DATA_OUT;
     configOut.channels = 2;
+    configOut.buffer_count = 16;  // Increase buffer count for smoother playback
+    configOut.buffer_size = 512;  // Larger buffers to prevent underruns
 
     Serial.println("Starting I2S stream...");
     _i2sOut->begin(configOut);

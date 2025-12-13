@@ -45,7 +45,7 @@ void setup()
   xTaskCreatePinnedToCore(
     ProcessAudio,
     "Audio",
-    8192, // Stack size (8KB for audio processing)
+    16384, // Stack size increased to 16KB for better audio processing
     NULL,
     12, // High priority for smooth audio
     &AudioTask,
@@ -67,7 +67,7 @@ void ProcessDevices(void* parameter)
     {
       deviceControls->Tick();
     }
-    vTaskDelay(1 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(5));
   }
 }
 
@@ -79,6 +79,7 @@ void ProcessAudio(void* parameter)
     {
       audioOut->Tick();
     }
-    vTaskDelay(1 / portTICK_PERIOD_MS);
+    // No delay - audio processing needs to run continuously for smooth playback
+    taskYIELD();
   }
 }
