@@ -5,14 +5,11 @@
 
 // Define the array of radio channels
 const char* AudioOut::channels[] = {
-    "http://stream.srg-ssr.ch/m/rsj/mp3_128",
-    "http://stream.srg-ssr.ch/m/rsc_de/mp3_128",
-    "http://stream.srg-ssr.ch/m/couleur3/mp3_128",
     "http://stream.srg-ssr.ch/m/rr/mp3_128",
+    "http://bigriver.broadcast.co.nz/bigriverfm.mp3",
     "http://stream.srg-ssr.ch/m/rsj/mp3_128",
     "http://stream.srg-ssr.ch/m/rsc_de/mp3_128",
-    "http://stream.srg-ssr.ch/m/couleur3/mp3_128",
-    "http://stream.srg-ssr.ch/m/rr/mp3_128"
+    "http://stream.srg-ssr.ch/m/couleur3/mp3_128"
 };
 
 const int AudioOut::channelCount = sizeof(AudioOut::channels) / sizeof(AudioOut::channels[0]);
@@ -43,13 +40,9 @@ void AudioOut::Setup()
 
     Serial.println("Configuring I2S output...");
     auto configOut = _i2sOut->defaultConfig(TX_MODE);
-    configOut.port_no = 0;
     configOut.pin_bck = I2S_BCLK_OUT;
     configOut.pin_ws = I2S_LRC_OUT;
     configOut.pin_data = I2S_DATA_OUT;
-    configOut.channels = 2;
-    configOut.buffer_count = 16;  // Increase buffer count for smoother playback
-    configOut.buffer_size = 512;  // Larger buffers to prevent underruns
 
     Serial.println("Starting I2S stream...");
     _i2sOut->begin(configOut);
@@ -71,7 +64,7 @@ void AudioOut::Start(int channel)
     if (channel >= channelCount) channel = channelCount - 1;
     if (channel != _pendingChannel)
     {
-        Serial.print("Changing to channel: ");
+        Serial.print("Changing audio to channel: ");
         Serial.println(channel);
         _pendingChannel = channel;
     }

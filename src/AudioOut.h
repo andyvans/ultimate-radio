@@ -1,6 +1,12 @@
 #pragma once
 #include <Arduino.h>
 #include "Constants.h"
+
+// Audio-Tools: Increase buffer sizes to improve streaming stability
+#define DEFAULT_BUFFER_SIZE 8192
+#define I2S_BUFFER_SIZE 1024
+#define I2S_BUFFER_COUNT 12
+
 #include <AudioTools.h>
 #include <AudioTools/Communication/AudioHttp.h>
 #include <AudioTools/Disk/AudioSourceURL.h>

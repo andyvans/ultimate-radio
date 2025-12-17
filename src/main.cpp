@@ -31,32 +31,22 @@ void setup()
   deviceControls = new DeviceControls();
   deviceControls->Setup(audioOut, deckLight);
 
+  // Create task for device controls
   Serial.println("Creating tasks");
-
   xTaskCreatePinnedToCore(
     ProcessDevices,
     "Device",
-    2048,
+    1024,
     NULL,
     1,
     &DeviceTask,
-    0); // Core 0 (shared with WiFi & system tasks)
-
-  xTaskCreatePinnedToCore(
-    ProcessAudio,
-    "Audio",
-    16384, // Stack size increased to 16KB for better audio processing
-    NULL,
-    12, // High priority for smooth audio
-    &AudioTask,
-    1); // Core 1 for audio processing 
-
-  Serial.println("=== Audio task created on Core 1 ===");
+    0); // Core 0 (shared with WiFi & system tasks)  
 }
 
 void loop()
 {
-  // Empty. All processing is done in tasks.
+  // Only process audio in the main loop (core 1)
+  if (audioOut != nullptr) audioOut->Tick();
 }
 
 void ProcessDevices(void* parameter)
@@ -68,18 +58,5 @@ void ProcessDevices(void* parameter)
       deviceControls->Tick();
     }
     vTaskDelay(pdMS_TO_TICKS(5));
-  }
-}
-
-void ProcessAudio(void* parameter)
-{
-  for (;;)
-  {
-    if (audioOut != nullptr)
-    {
-      audioOut->Tick();
-    }
-    // No delay - audio processing needs to run continuously for smooth playback
-    taskYIELD();
   }
 }

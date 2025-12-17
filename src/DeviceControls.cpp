@@ -18,25 +18,18 @@ void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
     _currentChannel = 0;
 
     Serial.println("=== Setting up DeviceControls ===");
-    // Create rotary encoder instance
+
     // Max value is maxChannels - 1 since we're using 0-based indexing
     int initialChannel = 0;
     int maxChannel = _audioOut != nullptr ? _audioOut->GetChannelCount() - 1 : 0;
 
-    _encoder = new OneRotaryEncoder(
-        ENCODER_PIN_A,
-        ENCODER_PIN_B,
-        ENCODER_PIN_SWITCH,
-        initialChannel, // Set initial value
-        0, // Set min value
-        maxChannel // Set max value
-    );
+    _encoder = new OneRotaryEncoder(ENCODER_PIN_A, ENCODER_PIN_B, ENCODER_PIN_SWITCH);
+    _encoder->SetRange(0, maxChannel, 4, initialChannel);
 
     // Start first radio channel by default
     Serial.print("Starting initial channel: ");
-    Serial.println(initialChannel);    
+    Serial.println(initialChannel);
     _audioOut->Start(initialChannel);
-    
 }
 
 void DeviceControls::Tick()
@@ -63,9 +56,10 @@ void DeviceControls::Tick()
         Serial.print("Changing to channel: ");
         Serial.println(_currentChannel);
 
-        _audioOut->Start(_currentChannel);
-        //_deckLight->DisplayLine(_pendingChannel);
+        _audioOut->Start(_currentChannel);        
     }
+
+    _deckLight->DisplayLine(_currentChannel);
 
     // Check for button presses
     EncoderSwitchState switchState = _encoder->GetSwitchState();
