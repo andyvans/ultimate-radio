@@ -5,11 +5,11 @@
 
 // Define the array of radio channels
 const char* AudioOut::channels[] = {
-    "https://stream.srg-ssr.ch/m/rr/mp3_128", //"http://stream.srg-ssr.ch/m/rr/mp3_128", skip redirect    
-    "http://stream.srg-ssr.ch/m/rsj/mp3_128",
-    "http://stream.srg-ssr.ch/m/rsc_de/mp3_128",
-    "http://stream.srg-ssr.ch/m/couleur3/mp3_128",
+    "https://stream.srg-ssr.ch/m/rsj/mp3_128",
+    "https://stream.srg-ssr.ch/srgssr/rsc_de/mp3/128",
+    "https://stream.srg-ssr.ch/m/couleur3/mp3_128",
     "http://bigriver.broadcast.co.nz/bigriverfm.mp3",
+    "http://hip-hop.channel.whff.radio:8046/stream"
 };
 
 const int AudioOut::channelCount = sizeof(AudioOut::channels) / sizeof(AudioOut::channels[0]);
@@ -27,7 +27,7 @@ void AudioOut::Setup()
     AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Warning);
 
     Serial.println("Creating URLStream (WiFi connecting)...");
-    _urlStream = new URLStream(WIFI_SSID, WIFI_PASSWORD);
+    _urlStream = new URLStreamBuffered(WIFI_SSID, WIFI_PASSWORD, 4096);
 
     Serial.println("WiFi connected! Creating AudioSourceURL...");
     _audioSourceUrl = new AudioSourceURL(*_urlStream, channels, "audio/mp3");

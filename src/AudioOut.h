@@ -3,9 +3,9 @@
 #include "Constants.h"
 
 // Audio-Tools: Increase buffer sizes to improve streaming stability
-#define DEFAULT_BUFFER_SIZE 8192
-#define I2S_BUFFER_SIZE 1024
-#define I2S_BUFFER_COUNT 12
+//#define DEFAULT_BUFFER_SIZE 4096
+//#define I2S_BUFFER_SIZE 1024
+//#define I2S_BUFFER_COUNT 12
 
 #include <AudioTools.h>
 #include <AudioTools/Communication/AudioHttp.h>
@@ -42,7 +42,7 @@ private:
     int _pendingChannel;
     bool _isPlaying;
 
-    URLStream* _urlStream;
+    URLStreamBuffered* _urlStream;
     AudioSourceURL* _audioSourceUrl;
     I2SStream* _i2sOut;
     MP3DecoderHelix* _mp3Decoder;
