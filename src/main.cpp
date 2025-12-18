@@ -36,7 +36,7 @@ void setup()
   xTaskCreatePinnedToCore(
     ProcessDevices,
     "Device",
-    1024,
+    4096, // Reduced for just wled and device controls
     NULL,
     1,
     &DeviceTask,

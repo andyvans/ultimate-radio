@@ -29,6 +29,7 @@ void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
     // Start first radio channel by default
     Serial.print("Starting initial channel: ");
     Serial.println(initialChannel);
+    _deckLight->DisplayLine(initialChannel);
     _audioOut->Start(initialChannel);
 }
 
@@ -40,12 +41,13 @@ void DeviceControls::Tick()
 
     // Check for position changes
     EncoderPositionState posState = _encoder->GetPosition();
-    if (posState.hasNewPosition && posState.position != _currentChannel)
+    if (posState.hasNewPosition && posState.position != _pendingChannel)
     {
         // New position detected - update pending channel and reset timer
         _pendingChannel = posState.position;
         _lastPositionChangeTime = millis();
         _hasPendingChange = true;
+        _deckLight->DisplayLine(_pendingChannel);
     }
 
     // Check if we should apply the pending channel change (500ms stability)
@@ -53,13 +55,9 @@ void DeviceControls::Tick()
     {
         _currentChannel = _pendingChannel;
         _hasPendingChange = false;
-        Serial.print("Changing to channel: ");
-        Serial.println(_currentChannel);
-
-        _audioOut->Start(_currentChannel);        
+        _deckLight->DisplayLine(_currentChannel);
+        _audioOut->Start(_currentChannel);
     }
-
-    _deckLight->DisplayLine(_currentChannel);
 
     // Check for button presses
     EncoderSwitchState switchState = _encoder->GetSwitchState();

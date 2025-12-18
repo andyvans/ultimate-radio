@@ -5,11 +5,11 @@
 
 // Define the array of radio channels
 const char* AudioOut::channels[] = {
-    "http://stream.srg-ssr.ch/m/rr/mp3_128",
-    "http://bigriver.broadcast.co.nz/bigriverfm.mp3",
+    "https://stream.srg-ssr.ch/m/rr/mp3_128", //"http://stream.srg-ssr.ch/m/rr/mp3_128", skip redirect    
     "http://stream.srg-ssr.ch/m/rsj/mp3_128",
     "http://stream.srg-ssr.ch/m/rsc_de/mp3_128",
-    "http://stream.srg-ssr.ch/m/couleur3/mp3_128"
+    "http://stream.srg-ssr.ch/m/couleur3/mp3_128",
+    "http://bigriver.broadcast.co.nz/bigriverfm.mp3",
 };
 
 const int AudioOut::channelCount = sizeof(AudioOut::channels) / sizeof(AudioOut::channels[0]);

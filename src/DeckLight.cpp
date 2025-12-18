@@ -12,11 +12,9 @@ int DeckLight::themeIndex = 0;
 bool DeckLight::autoChangePatterns = false;
 const int DeckLight::BrightnessSettings[] = { 60, 30, 10 };
 
-#define LED_VOLTS 5
-
 DeckLight::DeckLight()
 {
-  matrix = new FastLED_NeoMatrix(matrixLeds, DeckLightMatrixWidth, DeckLightMatrixHeight, 
+  matrix = new FastLED_NeoMatrix(matrixLeds, DeckLightMatrixWidth, DeckLightMatrixHeight,
     NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_ROWS + NEO_MATRIX_ZIGZAG + NEO_TILE_TOP + NEO_TILE_LEFT + NEO_TILE_ROWS);
 }
 
@@ -25,14 +23,25 @@ void DeckLight::Setup()
   Serial.println("Setting up DeckLight");
 
   // Careful with the amount of power here if running off USB port
-  const int MaxMilliAmps = 200;
+  const int MaxMilliAmps = 400;
+  const int MaxVolts = 5;
 
   // Setup LED matrix
   // WS2812B is the chip type, GRB is the colour order
   FastLED.addLeds<WS2812B, LED_MATRIX_PIN, EOrder::GRB>(matrixLeds, DeckLightLedCount).setCorrection(TypicalSMD5050);
-  FastLED.setMaxPowerInVoltsAndMilliamps(LED_VOLTS, MaxMilliAmps);
+  FastLED.setMaxPowerInVoltsAndMilliamps(MaxVolts, MaxMilliAmps);
   FastLED.setBrightness(BrightnessSettings[1]);
   FastLED.clear();
+}
+
+void DeckLight::DisplayLine(int index)
+{
+  FastLED.clear();
+  for (int x = 0; x < DeckLightMatrixWidth; x++)
+  {
+    matrix->drawPixel(x, index, ColorFromPalette(purplePalette, index * (255 / (index + 1))));
+  }
+  FastLED.show();
 }
 
 void DeckLight::DisplayAudio(int bandValues[])
@@ -270,13 +279,5 @@ void DeckLight::Waterfall(int bandValues[], int band)
         matrixLeds[pixelIndexY] = matrixLeds[pixelIndex];
       }
     }
-  }
-}
-
-void DeckLight::DisplayLine(int index)
-{
-  for (int x = 0; x < DeckLightMatrixWidth; x++)
-  {
-    matrix->drawPixel(x, index, ColorFromPalette(purplePalette, index * (255 / (index + 1))));
   }
 }
