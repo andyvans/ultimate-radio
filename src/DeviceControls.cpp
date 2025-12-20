@@ -15,22 +15,21 @@ void DeviceControls::Setup(AudioOut* audioOut, DeckLight* deckLight)
 {
     _audioOut = audioOut;
     _deckLight = deckLight;
-    _currentChannel = 0;
 
     Serial.println("=== Setting up DeviceControls ===");
 
     // Max value is maxChannels - 1 since we're using 0-based indexing
-    int initialChannel = 0;
+    _currentChannel = _audioOut != nullptr ? _audioOut->GetCurrentChannel() : 0;
     int maxChannel = _audioOut != nullptr ? _audioOut->GetChannelCount() - 1 : 0;
 
     _encoder = new OneRotaryEncoder(ENCODER_PIN_A, ENCODER_PIN_B, ENCODER_PIN_SWITCH);
-    _encoder->SetRange(0, maxChannel, 4, initialChannel);
+    _encoder->SetRange(0, maxChannel, 4, _currentChannel);
 
     // Start first radio channel by default
     Serial.print("Starting initial channel: ");
-    Serial.println(initialChannel);
-    _deckLight->DisplayLine(initialChannel);
-    _audioOut->Start(initialChannel);
+    Serial.println(_currentChannel);
+    _deckLight->DisplayLine(_currentChannel);
+    _audioOut->Start(_currentChannel);
 }
 
 void DeviceControls::Tick()

@@ -27,18 +27,21 @@ void DeckLight::Setup()
   FastLED.clear();
 }
 
-void DeckLight::DisplayLine(int index)
+void DeckLight::DisplayLine(int channel)
 {
   FastLED.clear();
 
+  // Draw a vertical line for the selected channel
+  auto color = ColorFromPalette(purplePalette, 200 + channel);
+  int index = channel % DeckLightMatrixWidth;
   for (int y = 0; y < DeckLightMatrixHeight; y++)
   {
-    matrix->drawPixel(index, y, ColorFromPalette(purplePalette, 200));
+    matrix->drawPixel(index, y, color);
   }
 
-  // Enable indicators (these overlap with bars but that's ok)
+  // Draw indicators over the left and right edges of the middle row
   matrix->drawPixel(0, 1, CHSV(0, 0, 255));
-  matrix->drawPixel(DeckLightMatrixWidth - 1, 1, CHSV(0, 0, 255));
+  matrix->drawPixel(DeckLightMatrixWidth - 1, 1, CRGB(200, 0, 0));
 
   FastLED.show();
 }

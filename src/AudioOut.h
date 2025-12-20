@@ -2,10 +2,10 @@
 #include <Arduino.h>
 #include "Constants.h"
 
-// Audio-Tools: Increase buffer sizes to improve streaming stability
-//#define DEFAULT_BUFFER_SIZE 4096
-//#define I2S_BUFFER_SIZE 1024
-//#define I2S_BUFFER_COUNT 12
+// Audio-Tools: Buffer sizes adjusted for memory constraints
+#define DEFAULT_BUFFER_SIZE 1536 // Default is 1024
+#define I2S_BUFFER_SIZE 512 // Default is 512
+#define I2S_BUFFER_COUNT 8 // Default is 6
 
 #include <AudioTools.h>
 #include <AudioTools/Communication/AudioHttp.h>
@@ -35,6 +35,7 @@ public:
     void Start(int channel);
     void Tick();
     int GetChannelCount();
+    int GetCurrentChannel();
 
 private:
     AudioMode _mode;
