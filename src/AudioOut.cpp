@@ -12,7 +12,7 @@ const char* AudioOut::channels[] = {
     "https://streaming.brol.tech/rtfmlounge",
     "https://live1.lankaradio.com:8010/128kbps.mp3",
     "https://s1-webradio.antenne.de/top-40",
-    "http://streaming.swisstxt.ch/m/drsvirus/mp3_128"
+    "http://streaming.swisstxt.ch/m/drsvirus/mp3_128",
     "http://hip-hop.channel.whff.radio:8046/stream"
 };
 
