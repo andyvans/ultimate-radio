@@ -10,6 +10,8 @@ Remove the original valve radio components and replace with modern components in
 - 3 RGB LED ribbons to use as _tuning_ graphics
 - Rotary encoder to control the radio station
 
+MP3 streaming and decoding us done using the impressive [https://github.com/pschatzmann/arduino-audio-tools](https://github.com/pschatzmann/arduino-audio-tools).
+
 ![Inside](/images/front.jpg)
 ![Inside](/images/esp32-i2s.jpg)
 ![Inside](/images/internals.jpg)
