@@ -2,14 +2,18 @@
 #include "AudioOut.h"
 #include "DeviceControls.h"
 #include "DeckLight.h"
+#include "ChannelManager.h"
+#include "_Secrets.h"
+
+// Configuration URL - change this to your config file location
+#define CONFIG_URL "https://raw.githubusercontent.com/andyvans/ultimate-radio/main/radio-config.txt"
 
 AudioOut* audioOut;
 DeviceControls* deviceControls;
 DeckLight* deckLight;
+RadioConfig* radioConfig;
 
-TaskHandle_t AudioTask = NULL;
 TaskHandle_t DeviceTask = NULL;
-
 
 void ProcessDevices(void* parameter);
 void ProcessAudio(void* parameter);
@@ -22,8 +26,15 @@ void setup()
 
   Serial.println("\n\n=== Ultimate Radio Starting ===");
 
+  radioConfig = ChannelManager::LoadChannels(WIFI_SSID, WIFI_PASSWORD, CONFIG_URL);
+  if (radioConfig == nullptr)
+  {
+    Serial.println("Using default channels");
+    radioConfig = ChannelManager::GetDefaultChannels();
+  }
+
   audioOut = new AudioOut();
-  audioOut->Setup();
+  audioOut->Setup(radioConfig->urls, radioConfig->channelCount, radioConfig->defaultChannel);
 
   deckLight = new DeckLight();
   deckLight->Setup();

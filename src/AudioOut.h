@@ -30,25 +30,30 @@ class AudioOut
 {
 public:
     AudioOut();
-    void Setup();
+    ~AudioOut();
+    void Setup(char** urls, int count, int defaultChannel);
     void Stop();
     void Start(int channel);
     void Tick();
     int GetChannelCount();
     int GetCurrentChannel();
+    AudioMode GetMode();
 
 private:
     AudioMode _mode;
     int _currentChannel;
     int _pendingChannel;
     bool _isPlaying;
+    bool _usingDynamicChannels;
 
     URLStreamBuffered* _urlStream;
-    AudioSourceURL* _audioSourceUrl;
+    AudioSourceDynamicURL* _audioSourceUrl;
     I2SStream* _i2sOut;
     MP3DecoderHelix* _mp3Decoder;
     AudioPlayer* _audioPlayer;
 
-    static const char* channels[];
-    static const int channelCount;
+    // Channel storage
+    const char** _channels;
+    int _channelCount;
+    static const int _defaultChannelCount;
 };

@@ -16,6 +16,7 @@ public:
   DeckLight();
   void Setup();
   void DisplayLine(int band);
+  void DrawBluetoothBar();
 
 private:
   // FastLed globals

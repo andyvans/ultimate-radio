@@ -45,3 +45,17 @@ void DeckLight::DisplayLine(int channel)
 
   FastLED.show();
 }
+
+void DeckLight::DrawBluetoothBar()
+{
+  FastLED.clear();
+
+  // Draw a blue bar across the middle row    
+  matrix->drawLine(1, 1, DeckLightMatrixWidth - 2, 1, 15); //blue
+
+  // Draw indicators over the left and right edges of the middle row
+  matrix->drawPixel(0, 1, CHSV(0, 0, 255));
+  matrix->drawPixel(DeckLightMatrixWidth - 1, 1, CRGB(200, 0, 0));
+
+  FastLED.show();
+}

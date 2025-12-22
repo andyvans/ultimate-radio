@@ -3,41 +3,59 @@
 #include "_Secrets.h"
 #include <WiFi.h>
 
-// Define the array of radio channels
-const char* AudioOut::channels[] = {
-    "https://stream.srg-ssr.ch/srgssr/rsc_de/mp3/128",
-    "https://stream.srg-ssr.ch/m/couleur3/mp3_128",
-    "https://stream.srg-ssr.ch/m/rsj/mp3_128",
-    "http://bigriver.broadcast.co.nz/bigriverfm.mp3",
-    "https://streaming.brol.tech/rtfmlounge",
-    "https://live1.lankaradio.com:8010/128kbps.mp3",
-    "https://s1-webradio.antenne.de/top-40",
-    "http://streaming.swisstxt.ch/m/drsvirus/mp3_128",
-    "http://hip-hop.channel.whff.radio:8046/stream"
-};
-
-#define DEFAULT_CHANNEL 2
-
-const int AudioOut::channelCount = sizeof(AudioOut::channels) / sizeof(AudioOut::channels[0]);
-
 AudioOut::AudioOut()
 {
-    _currentChannel = DEFAULT_CHANNEL;
-    _pendingChannel = DEFAULT_CHANNEL;
+    _currentChannel = 0;
+    _pendingChannel = 0;
     _mode = AUDIO_MODE_OFF;
     _isPlaying = false;
+    _usingDynamicChannels = false;
+    _channels = nullptr;
+    _channelCount = 0;
 }
 
-void AudioOut::Setup()
+AudioOut::~AudioOut()
+{
+    // Note: Dynamic channel memory is managed by RadioConfig
+}
+
+void AudioOut::Setup(char** urls, int count, int defaultChannel)
 {
     Serial.println("=== Setting up AudioOut ===");
+
+    if (urls != nullptr && count > 0)
+    {
+        _channels = (const char**)urls;
+        _channelCount = count;
+        Serial.print("Using ");
+        Serial.print(count);
+        Serial.println(" dynamically loaded channels");
+    }
+    else
+    {
+        Serial.println("No channels provided!");
+        _channels = nullptr;
+        _channelCount = 0;
+    }
+    if (defaultChannel >= 0 && defaultChannel < _channelCount)
+    {
+        _currentChannel = defaultChannel;
+        _pendingChannel = defaultChannel;
+    }
+
     AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Warning);
 
     Serial.println("Creating URLStream (WiFi connecting)...");
     _urlStream = new URLStreamBuffered(WIFI_SSID, WIFI_PASSWORD);
 
     Serial.println("WiFi connected! Creating AudioSourceURL...");
-    _audioSourceUrl = new AudioSourceURL(*_urlStream, channels, "audio/mp3", _currentChannel);
+    _audioSourceUrl = new AudioSourceDynamicURL(*_urlStream, "audio/mp3", _currentChannel);
+
+    // Add all the URLs to the dynamic source
+    for (int i = 0; i < _channelCount; i++)
+    {
+        _audioSourceUrl->addURL(_channels[i]);
+    }
 
     Serial.println("Creating MP3 decoder...");
     _mp3Decoder = new MP3DecoderHelix();
@@ -62,7 +80,7 @@ void AudioOut::Setup()
 
 int AudioOut::GetChannelCount()
 {
-    return channelCount;
+    return _channelCount;
 }
 
 int AudioOut::GetCurrentChannel()
@@ -73,11 +91,11 @@ int AudioOut::GetCurrentChannel()
 void AudioOut::Start(int channel)
 {
     if (channel < 0) channel = 0;
-    if (channel >= channelCount) channel = channelCount - 1;
+    if (channel >= _channelCount) channel = _channelCount - 1;
     if (channel != _pendingChannel)
     {
         Serial.print("Changing pending audio to channel: ");
-        Serial.println(channels[channel]);
+        Serial.println(_channels[channel]);
         _pendingChannel = channel;
     }
     _mode = AUDIO_MODE_RADIO;
@@ -86,6 +104,11 @@ void AudioOut::Start(int channel)
 void AudioOut::Stop()
 {
     _mode = AUDIO_MODE_OFF;
+}
+
+AudioMode AudioOut::GetMode()
+{
+    return _mode;
 }
 
 void AudioOut::Tick()
@@ -103,16 +126,14 @@ void AudioOut::Tick()
     {
         _currentChannel = _pendingChannel;
         Serial.print("Switching to channel: ");
-        Serial.println(channels[_currentChannel]);
-        _audioPlayer->end();
-        _urlStream->flush();
-        _audioPlayer->begin(_currentChannel);
+        Serial.println(_channels[_currentChannel]);
+        _audioPlayer->setIndex(_currentChannel);
     }
 
     if (_mode == AUDIO_MODE_RADIO && !_isPlaying)
     {
         Serial.print("Starting channel: ");
-        Serial.println(channels[_currentChannel]);
+        Serial.println(_channels[_currentChannel]);
         _audioPlayer->begin(_currentChannel);
         _isPlaying = true;
     }
