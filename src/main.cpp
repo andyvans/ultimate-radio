@@ -16,7 +16,6 @@ RadioConfig* radioConfig;
 TaskHandle_t DeviceTask = NULL;
 
 void ProcessDevices(void* parameter);
-void ProcessAudio(void* parameter);
 
 void setup()
 {
@@ -60,6 +59,7 @@ void loop()
   if (audioOut != nullptr) audioOut->Tick();
 }
 
+// Task to process device controls (core 0)
 void ProcessDevices(void* parameter)
 {
   for (;;)
