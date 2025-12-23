@@ -72,8 +72,8 @@ void DeviceControls::Tick()
         _deckLight->DisplayLine(_pendingChannel);
     }
 
-    // Check if we should apply the pending channel change (500ms stability)
-    if (_hasPendingChange && (millis() - _lastPositionChangeTime >= 500))
+    // Debounce check if we should apply the pending channel change
+    if (_hasPendingChange && (millis() - _lastPositionChangeTime >= ChannelChangeDelayMs))
     {
         _currentChannel = _pendingChannel;
         _hasPendingChange = false;

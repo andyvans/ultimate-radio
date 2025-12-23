@@ -20,4 +20,6 @@ private:
     OneRotaryEncoder* _encoder;
     AudioOut* _audioOut;
     DeckLight* _deckLight;
+
+    int ChannelChangeDelayMs = 750;
 };

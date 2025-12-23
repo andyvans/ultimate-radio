@@ -34,5 +34,9 @@ public:
     static bool LoadConfig(const char* configUrl, RadioConfig& config);
 
 private:
-    static bool parseCSV(const char* data, int dataLen, RadioConfig& config);
+    static bool ParseCSV(const char* data, int dataLen, RadioConfig& config);
+    static bool IsLineEnding(char c);
+    static int GetLineLength(const char* data, int start, int end);
+    static int SkipLineEnding(const char* data, int pos, int dataLen);
+    static char* AllocateAndCopyLine(const char* data, int start, int length);
 };

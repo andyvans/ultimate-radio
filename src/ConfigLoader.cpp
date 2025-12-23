@@ -57,13 +57,13 @@ bool ConfigLoader::LoadConfig(const char* configUrl, RadioConfig& config)
     Serial.print(totalRead);
     Serial.println(" bytes");
 
-    bool success = parseCSV(buffer, totalRead, config);
+    bool success = ParseCSV(buffer, totalRead, config);
     free(buffer);
 
     return success;
 }
 
-bool ConfigLoader::parseCSV(const char* data, int dataLen, RadioConfig& config)
+bool ConfigLoader::ParseCSV(const char* data, int dataLen, RadioConfig& config)
 {
     if (data == nullptr || dataLen == 0)
     {
@@ -92,60 +92,41 @@ bool ConfigLoader::parseCSV(const char* data, int dataLen, RadioConfig& config)
     for (int i = 0; i <= dataLen; i++)
     {
         // End of line or end of data
-        if (i == dataLen || data[i] == '\n' || data[i] == '\r')
+        if (i == dataLen || IsLineEnding(data[i]))
         {
-            if (i > lineStart)
-            {
-                // Calculate line length, skipping trailing \r if present
-                int lineLen = i - lineStart;
-                if (lineLen > 0 && data[i - 1] == '\r')
-                {
-                    lineLen--;
-                }
+            int lineLen = GetLineLength(data, lineStart, i);
 
-                if (lineLen > 0)
+            if (lineLen > 0)
+            {
+                // First line is the default channel index
+                if (lineNum == 0)
                 {
-                    // First line is the default channel index
-                    if (lineNum == 0)
+                    char* numStr = AllocateAndCopyLine(data, lineStart, lineLen);
+                    if (numStr != nullptr)
                     {
-                        char numStr[16];
-                        int copyLen = min(lineLen, 15);
-                        strncpy(numStr, data + lineStart, copyLen);
-                        numStr[copyLen] = '\0';
                         config.defaultChannel = atoi(numStr);
                         Serial.print("Default channel: ");
                         Serial.println(config.defaultChannel);
+                        free(numStr);
                     }
-                    else if (config.channelCount < MAX_CHANNELS)
-                    {
-                        // Skip comment lines
-                        if (data[lineStart] != '#')
-                        {
-                            // Allocate and copy URL
-                            int urlLen = min(lineLen, MAX_URL_LENGTH - 1);
-                            config.urls[config.channelCount] = (char*)malloc(urlLen + 1);
-                            if (config.urls[config.channelCount] != nullptr)
-                            {
-                                strncpy(config.urls[config.channelCount], data + lineStart, urlLen);
-                                config.urls[config.channelCount][urlLen] = '\0';
-                                Serial.print("Channel ");
-                                Serial.print(config.channelCount);
-                                Serial.print(": ");
-                                Serial.println(config.urls[config.channelCount]);
-                                config.channelCount++;
-                            }
-                        }
-                    }
-                    lineNum++;
                 }
+                else if (config.channelCount < MAX_CHANNELS && data[lineStart] != '#')
+                {
+                    // Skip comment lines starting with #
+                    config.urls[config.channelCount] = AllocateAndCopyLine(data, lineStart, lineLen);
+                    if (config.urls[config.channelCount] != nullptr)
+                    {
+                        Serial.print("Channel ");
+                        Serial.print(config.channelCount);
+                        Serial.print(": ");
+                        Serial.println(config.urls[config.channelCount]);
+                        config.channelCount++;
+                    }
+                }
+                lineNum++;
             }
 
-            // Skip consecutive \r\n
-            if (i < dataLen && data[i] == '\r' && i + 1 < dataLen && data[i + 1] == '\n')
-            {
-                i++;
-            }
-
+            i = SkipLineEnding(data, i, dataLen);
             lineStart = i + 1;
         }
     }
@@ -155,4 +136,42 @@ bool ConfigLoader::parseCSV(const char* data, int dataLen, RadioConfig& config)
     Serial.println(" channels");
 
     return config.channelCount > 0;
+}
+
+bool ConfigLoader::IsLineEnding(char c)
+{
+    return c == '\n' || c == '\r';
+}
+
+int ConfigLoader::GetLineLength(const char* data, int start, int end)
+{
+    int length = end - start;
+    // Strip trailing \r if present
+    if (length > 0 && data[end - 1] == '\r')
+    {
+        length--;
+    }
+    return length;
+}
+
+int ConfigLoader::SkipLineEnding(const char* data, int pos, int dataLen)
+{
+    // Skip \r\n sequence
+    if (pos < dataLen && data[pos] == '\r' && pos + 1 < dataLen && data[pos + 1] == '\n')
+    {
+        return pos + 1;
+    }
+    return pos;
+}
+
+char* ConfigLoader::AllocateAndCopyLine(const char* data, int start, int length)
+{
+    int copyLen = min(length, MAX_URL_LENGTH - 1);
+    char* str = (char*)malloc(copyLen + 1);
+    if (str != nullptr)
+    {
+        strncpy(str, data + start, copyLen);
+        str[copyLen] = '\0';
+    }
+    return str;
 }
