@@ -6,4 +6,4 @@ https://streaming.brol.tech/rtfmlounge
 http://live1.lankaradio.com:8010/128kbps.mp3
 http://streaming.swisstxt.ch/m/drsvirus/mp3_128
 http://hip-hop.channel.whff.radio:8046/stream
-https://s1-webradio.antenne.de/top-40
+http://streams.95bfm.com/stream128
