@@ -1,8 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
-#define MAX_CHANNELS 20
-#define MAX_URL_LENGTH 256
+#define MAX_CHANNELS 10
+#define MAX_URL_LENGTH 80
 
 struct RadioConfig
 {
