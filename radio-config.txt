@@ -1,7 +1,8 @@
 2
-https://stream.srg-ssr.ch/m/couleur3/aacp_96
-https://stream.srg-ssr.ch/srgssr/rsj/aac/96
+http://bigriver.broadcast.co.nz/bigriverfm.mp3
+http://stream.srg-ssr.ch/m/couleur3/mp3_128
+http://stream.srg-ssr.ch/srgssr/rsj/mp3/128
 https://streaming.brol.tech/rtfmlounge
-https://playerservices.streamtheworld.com/api/livestream-redirect/NZME_31AAC.aac
-http://live1.lankaradio.com:8010/96kbps.aac
-https://admin.stream.rinse.fm/proxy/rinse_uk/stream
+http://live1.lankaradio.com:8010/128kbps.mp3
+http://streaming.swisstxt.ch/m/drsvirus/mp3_128
+http://hip-hop.channel.whff.radio:8046/stream
