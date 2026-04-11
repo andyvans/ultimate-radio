@@ -19,13 +19,13 @@ AudioOut::~AudioOut()
     // Note: Dynamic channel memory is managed by RadioConfig
 }
 
-void AudioOut::Setup(char** urls, int count, int defaultChannel)
+void AudioOut::Setup(ChannelConfig* channels, int count, int defaultChannel)
 {
     Serial.println("=== Setting up AudioOut ===");
 
-    if (urls != nullptr && count > 0)
+    if (channels != nullptr && count > 0)
     {
-        _channels = (const char**)urls;
+        _channels = channels;
         _channelCount = count;
         Serial.print("Using ");
         Serial.print(count);
@@ -49,16 +49,23 @@ void AudioOut::Setup(char** urls, int count, int defaultChannel)
     _urlStream = new URLStreamBuffered(WIFI_SSID, WIFI_PASSWORD);
 
     Serial.println("WiFi connected! Creating AudioSourceURL...");
-    _audioSourceUrl = new AudioSourceDynamicURL(*_urlStream, "audio/mp3", _currentChannel);
+    _audioSourceUrl = new AudioSourceDynamicURL(*_urlStream, nullptr, _currentChannel);
 
     // Add all the URLs to the dynamic source
     for (int i = 0; i < _channelCount; i++)
     {
-        _audioSourceUrl->addURL(_channels[i]);
+        _audioSourceUrl->addURL(_channels[i].url);
     }
 
-    Serial.println("Creating MP3 decoder...");
+    Serial.println("Creating decoders...");
     _mp3Decoder = new MP3DecoderHelix();
+    _aacDecoder = new AACDecoderHelix();
+
+    Serial.println("Creating MultiDecoder...");
+    _multiDecoder = new MultiDecoder(*_urlStream);
+    _multiDecoder->addDecoder(*_mp3Decoder, "audio/mp3");
+    _multiDecoder->addDecoder(*_aacDecoder, "audio/aac");
+    _multiDecoder->addDecoder(*_aacDecoder, "audio/aacp");
 
     Serial.println("Creating I2S stream...");
     _i2sOut = new I2SStream();
@@ -73,7 +80,7 @@ void AudioOut::Setup(char** urls, int count, int defaultChannel)
     _i2sOut->begin(configOut);
 
     Serial.println("Creating audio player...");
-    _audioPlayer = new AudioPlayer(*_audioSourceUrl, *_i2sOut, *_mp3Decoder);
+    _audioPlayer = new AudioPlayer(*_audioSourceUrl, *_i2sOut, *_multiDecoder);
 
     Serial.println("=== AudioOut setup complete ===");
 }
@@ -95,7 +102,7 @@ void AudioOut::Start(int channel)
     if (channel != _pendingChannel)
     {
         Serial.print("Changing pending audio to channel: ");
-        Serial.println(_channels[channel]);
+        Serial.println(_channels[channel].url);
         _pendingChannel = channel;
     }
     _mode = AUDIO_MODE_RADIO;
@@ -126,14 +133,14 @@ void AudioOut::Tick()
     {
         _currentChannel = _pendingChannel;
         Serial.print("Switching to channel: ");
-        Serial.println(_channels[_currentChannel]);
+        Serial.println(_channels[_currentChannel].url);
         _audioPlayer->setIndex(_currentChannel);
     }
 
     if (_mode == AUDIO_MODE_RADIO && !_isPlaying)
     {
         Serial.print("Starting channel: ");
-        Serial.println(_channels[_currentChannel]);
+        Serial.println(_channels[_currentChannel].url);
         _audioPlayer->begin(_currentChannel);
         _isPlaying = true;
     }

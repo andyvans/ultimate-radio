@@ -33,7 +33,7 @@ void setup()
   }
 
   audioOut = new AudioOut();
-  audioOut->Setup(radioConfig->urls, radioConfig->channelCount, radioConfig->defaultChannel);
+  audioOut->Setup(radioConfig->channels, radioConfig->channelCount, radioConfig->defaultChannel);
 
   deckLight = new DeckLight();
   deckLight->Setup();

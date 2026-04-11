@@ -9,7 +9,7 @@ public:
     static RadioConfig* GetDefaultChannels();
 
 private:
-    static const char* _defaultChannels[];
+    static const ChannelConfig _defaultChannels[];
     static const int _defaultChannelCount;
     static const int _defaultChannel;
 };

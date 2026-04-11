@@ -71,17 +71,12 @@ bool ConfigLoader::ParseCSV(const char* data, int dataLen, RadioConfig& config)
         return false;
     }
 
-    // Allocate URL array
-    config.urls = (char**)malloc(MAX_CHANNELS * sizeof(char*));
-    if (config.urls == nullptr)
+    // Allocate channel array
+    config.channels = new ChannelConfig[MAX_CHANNELS];
+    if (config.channels == nullptr)
     {
-        Serial.println("Failed to allocate URL array");
+        Serial.println("Failed to allocate channel array");
         return false;
-    }
-
-    for (int i = 0; i < MAX_CHANNELS; i++)
-    {
-        config.urls[i] = nullptr;
     }
 
     int lineStart = 0;
@@ -113,13 +108,24 @@ bool ConfigLoader::ParseCSV(const char* data, int dataLen, RadioConfig& config)
                 else if (config.channelCount < MAX_CHANNELS && data[lineStart] != '#')
                 {
                     // Skip comment lines starting with #
-                    config.urls[config.channelCount] = AllocateAndCopyLine(data, lineStart, lineLen);
-                    if (config.urls[config.channelCount] != nullptr)
+                    char* url = nullptr;
+                    char* mime = nullptr;
+                    ParseChannelLine(data, lineStart, lineLen, &url, &mime);
+                    if (url != nullptr)
                     {
+                        config.channels[config.channelCount].url = url;
+                        config.channels[config.channelCount].mimeType = mime;
                         Serial.print("Channel ");
                         Serial.print(config.channelCount);
                         Serial.print(": ");
-                        Serial.println(config.urls[config.channelCount]);
+                        Serial.print(url);
+                        if (mime != nullptr)
+                        {
+                            Serial.print(" [");
+                            Serial.print(mime);
+                            Serial.print("]");
+                        }
+                        Serial.println();
                         config.channelCount++;
                     }
                 }
@@ -174,4 +180,65 @@ char* ConfigLoader::AllocateAndCopyLine(const char* data, int start, int length)
         str[copyLen] = '\0';
     }
     return str;
+}
+
+void ConfigLoader::ParseChannelLine(const char* data, int start, int length, char** outUrl, char** outMime)
+{
+    *outUrl = nullptr;
+    *outMime = nullptr;
+
+    // Find comma separator
+    int commaPos = -1;
+    for (int i = 0; i < length; i++)
+    {
+        if (data[start + i] == ',')
+        {
+            commaPos = i;
+            break;
+        }
+    }
+
+    if (commaPos < 0)
+    {
+        // No comma — entire line is the URL, no mime
+        *outUrl = AllocateAndCopyLine(data, start, length);
+        return;
+    }
+
+    // URL is everything before the comma (trimmed)
+    int urlLen = commaPos;
+    while (urlLen > 0 && data[start + urlLen - 1] == ' ') urlLen--;
+    *outUrl = AllocateAndCopyLine(data, start, urlLen);
+
+    // Mime is everything after the comma, trimmed of spaces and quotes
+    int mimeStart = commaPos + 1;
+    int mimeLen = length - mimeStart;
+
+    // Trim leading spaces
+    while (mimeLen > 0 && data[start + mimeStart] == ' ')
+    {
+        mimeStart++;
+        mimeLen--;
+    }
+    // Trim trailing spaces
+    while (mimeLen > 0 && data[start + mimeStart + mimeLen - 1] == ' ') mimeLen--;
+
+    // Strip surrounding quotes
+    if (mimeLen >= 2 && data[start + mimeStart] == '"' && data[start + mimeStart + mimeLen - 1] == '"')
+    {
+        mimeStart++;
+        mimeLen -= 2;
+    }
+
+    if (mimeLen > 0)
+    {
+        int copyLen = min(mimeLen, MAX_MIME_LENGTH - 1);
+        char* mime = (char*)malloc(copyLen + 1);
+        if (mime != nullptr)
+        {
+            strncpy(mime, data + start + mimeStart, copyLen);
+            mime[copyLen] = '\0';
+            *outMime = mime;
+        }
+    }
 }
