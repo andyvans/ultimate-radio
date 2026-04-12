@@ -3,10 +3,10 @@
 
 // Define the array of fallback radio channels
 const ChannelConfig ChannelManager::_defaultChannels[] = {
-    {(char*)"https://stream.srg-ssr.ch/srgssr/rsc_de/mp3/128", (char*)"audio/mp3"},
-    {(char*)"https://stream.srg-ssr.ch/m/couleur3/mp3_128", (char*)"audio/mp3"},
-    {(char*)"https://stream.srg-ssr.ch/m/rsj/mp3_128", (char*)"audio/mp3"},
-    {(char*)"http://live1.lankaradio.com:8010/128kbps.mp3", (char*)"audio/mp3"}
+    {(char*)"https://stream.srg-ssr.ch/srgssr/rsc_de/mp3/128"},
+    {(char*)"https://stream.srg-ssr.ch/m/couleur3/mp3_128"},
+    {(char*)"https://stream.srg-ssr.ch/m/rsj/mp3_128"},
+    {(char*)"http://live1.lankaradio.com:8010/128kbps.mp3"}
 };
 
 const int ChannelManager::_defaultChannelCount = sizeof(ChannelManager::_defaultChannels) / sizeof(ChannelManager::_defaultChannels[0]);

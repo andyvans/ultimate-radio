@@ -57,13 +57,13 @@ bool ConfigLoader::LoadConfig(const char* configUrl, RadioConfig& config)
     Serial.print(totalRead);
     Serial.println(" bytes");
 
-    bool success = ParseCSV(buffer, totalRead, config);
+    bool success = ParseConfig(buffer, totalRead, config);
     free(buffer);
 
     return success;
 }
 
-bool ConfigLoader::ParseCSV(const char* data, int dataLen, RadioConfig& config)
+bool ConfigLoader::ParseConfig(const char* data, int dataLen, RadioConfig& config)
 {
     if (data == nullptr || dataLen == 0)
     {
@@ -71,7 +71,6 @@ bool ConfigLoader::ParseCSV(const char* data, int dataLen, RadioConfig& config)
         return false;
     }
 
-    // Allocate channel array
     config.channels = new ChannelConfig[MAX_CHANNELS];
     if (config.channels == nullptr)
     {
@@ -86,55 +85,41 @@ bool ConfigLoader::ParseCSV(const char* data, int dataLen, RadioConfig& config)
 
     for (int i = 0; i <= dataLen; i++)
     {
-        // End of line or end of data
-        if (i == dataLen || IsLineEnding(data[i]))
+        if (i != dataLen && !IsLineEnding(data[i]))
+            continue;
+
+        int lineLen = GetLineLength(data, lineStart, i);
+        bool skip = (lineLen == 0 || data[lineStart] == '#');
+
+        if (!skip && lineNum == 0)
         {
-            int lineLen = GetLineLength(data, lineStart, i);
-
-            if (lineLen > 0)
+            char* numStr = AllocateString(data, lineStart, lineLen, 10);
+            if (numStr != nullptr)
             {
-                // First line is the default channel index
-                if (lineNum == 0)
-                {
-                    char* numStr = AllocateAndCopyLine(data, lineStart, lineLen);
-                    if (numStr != nullptr)
-                    {
-                        config.defaultChannel = atoi(numStr);
-                        Serial.print("Default channel: ");
-                        Serial.println(config.defaultChannel);
-                        free(numStr);
-                    }
-                }
-                else if (config.channelCount < MAX_CHANNELS && data[lineStart] != '#')
-                {
-                    // Skip comment lines starting with #
-                    char* url = nullptr;
-                    char* mime = nullptr;
-                    ParseChannelLine(data, lineStart, lineLen, &url, &mime);
-                    if (url != nullptr)
-                    {
-                        config.channels[config.channelCount].url = url;
-                        config.channels[config.channelCount].mimeType = mime;
-                        Serial.print("Channel ");
-                        Serial.print(config.channelCount);
-                        Serial.print(": ");
-                        Serial.print(url);
-                        if (mime != nullptr)
-                        {
-                            Serial.print(" [");
-                            Serial.print(mime);
-                            Serial.print("]");
-                        }
-                        Serial.println();
-                        config.channelCount++;
-                    }
-                }
-                lineNum++;
+                config.defaultChannel = atoi(numStr);
+                Serial.print("Default channel: ");
+                Serial.println(config.defaultChannel);
+                free(numStr);
             }
-
-            i = SkipLineEnding(data, i, dataLen);
-            lineStart = i + 1;
         }
+        else if (!skip && config.channelCount < MAX_CHANNELS)
+        {
+            char* url = AllocateString(data, lineStart, lineLen, MAX_URL_LENGTH);
+            if (url != nullptr)
+            {
+                config.channels[config.channelCount].url = url;
+                Serial.print("Channel ");
+                Serial.print(config.channelCount);
+                Serial.print(": ");
+                Serial.println(url);
+                config.channelCount++;
+            }
+        }
+
+        if (!skip) lineNum++;
+
+        i = SkipLineEnding(data, i, dataLen);
+        lineStart = i + 1;
     }
 
     Serial.print("Loaded ");
@@ -170,9 +155,9 @@ int ConfigLoader::SkipLineEnding(const char* data, int pos, int dataLen)
     return pos;
 }
 
-char* ConfigLoader::AllocateAndCopyLine(const char* data, int start, int length)
+char* ConfigLoader::AllocateString(const char* data, int start, int length, int maxLen)
 {
-    int copyLen = min(length, MAX_URL_LENGTH - 1);
+    int copyLen = min(length, maxLen - 1);
     char* str = (char*)malloc(copyLen + 1);
     if (str != nullptr)
     {
@@ -180,65 +165,4 @@ char* ConfigLoader::AllocateAndCopyLine(const char* data, int start, int length)
         str[copyLen] = '\0';
     }
     return str;
-}
-
-void ConfigLoader::ParseChannelLine(const char* data, int start, int length, char** outUrl, char** outMime)
-{
-    *outUrl = nullptr;
-    *outMime = nullptr;
-
-    // Find comma separator
-    int commaPos = -1;
-    for (int i = 0; i < length; i++)
-    {
-        if (data[start + i] == ',')
-        {
-            commaPos = i;
-            break;
-        }
-    }
-
-    if (commaPos < 0)
-    {
-        // No comma — entire line is the URL, no mime
-        *outUrl = AllocateAndCopyLine(data, start, length);
-        return;
-    }
-
-    // URL is everything before the comma (trimmed)
-    int urlLen = commaPos;
-    while (urlLen > 0 && data[start + urlLen - 1] == ' ') urlLen--;
-    *outUrl = AllocateAndCopyLine(data, start, urlLen);
-
-    // Mime is everything after the comma, trimmed of spaces and quotes
-    int mimeStart = commaPos + 1;
-    int mimeLen = length - mimeStart;
-
-    // Trim leading spaces
-    while (mimeLen > 0 && data[start + mimeStart] == ' ')
-    {
-        mimeStart++;
-        mimeLen--;
-    }
-    // Trim trailing spaces
-    while (mimeLen > 0 && data[start + mimeStart + mimeLen - 1] == ' ') mimeLen--;
-
-    // Strip surrounding quotes
-    if (mimeLen >= 2 && data[start + mimeStart] == '"' && data[start + mimeStart + mimeLen - 1] == '"')
-    {
-        mimeStart++;
-        mimeLen -= 2;
-    }
-
-    if (mimeLen > 0)
-    {
-        int copyLen = min(mimeLen, MAX_MIME_LENGTH - 1);
-        char* mime = (char*)malloc(copyLen + 1);
-        if (mime != nullptr)
-        {
-            strncpy(mime, data + start + mimeStart, copyLen);
-            mime[copyLen] = '\0';
-            *outMime = mime;
-        }
-    }
 }

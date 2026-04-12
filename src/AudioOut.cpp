@@ -81,6 +81,8 @@ void AudioOut::Setup(ChannelConfig* channels, int count, int defaultChannel)
 
     Serial.println("Creating audio player...");
     _audioPlayer = new AudioPlayer(*_audioSourceUrl, *_i2sOut, *_multiDecoder);
+        
+    _audioPlayer->setVolume(0.70f); // Reduce initial volume
 
     Serial.println("=== AudioOut setup complete ===");
 }
