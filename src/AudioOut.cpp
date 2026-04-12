@@ -113,9 +113,16 @@ AudioMode AudioOut::GetMode()
     return _mode;
 }
 
+bool AudioOut::IsActive()
+{
+    return _isActive;
+}
+
 void AudioOut::Tick()
 {
     if (_audioPlayer == nullptr) return;
+
+    _isActive = _audioPlayer->isActive();
 
     if (_mode == AUDIO_MODE_OFF && _isPlaying)
     {

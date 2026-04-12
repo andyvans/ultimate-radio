@@ -59,6 +59,12 @@ void DeviceControls::Tick()
         _audioOut->Start(_currentChannel);
     }
 
+    // Flash LEDs if audio stream is not active
+    if (!_audioOut->IsActive())
+    {
+        _deckLight->FlashLine(_currentChannel);
+    }
+
     _encoder->Tick();
 
     // Check for position changes

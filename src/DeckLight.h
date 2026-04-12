@@ -16,6 +16,7 @@ public:
   DeckLight();
   void Setup();
   void DisplayLine(int band);
+  void FlashLine(int channel);
   void DrawBluetoothBar();
 
 private:
@@ -26,4 +27,5 @@ private:
   // RGB LED matrix
   FastLED_NeoMatrix* matrix;
   CRGB matrixLeds[DeckLightLedCount];
+  bool _isFlashOn;
 };

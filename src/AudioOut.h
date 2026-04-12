@@ -38,6 +38,7 @@ public:
     int GetChannelCount();
     int GetCurrentChannel();
     AudioMode GetMode();
+    bool IsActive();
 
 private:
     AudioMode _mode;
@@ -56,4 +57,5 @@ private:
     const char** _channels;
     int _channelCount;
     static const int _defaultChannelCount;
+    bool _isActive;
 };

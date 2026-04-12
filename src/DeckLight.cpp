@@ -7,6 +7,7 @@ CRGBPalette16 DeckLight::purplePalette = PurpleGlobalPalette;
 
 DeckLight::DeckLight()
 {
+  _isFlashOn = false;
   matrix = new FastLED_NeoMatrix(matrixLeds, DeckLightMatrixWidth, DeckLightMatrixHeight,
     NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_ROWS + NEO_MATRIX_ZIGZAG + NEO_TILE_TOP + NEO_TILE_LEFT + NEO_TILE_ROWS);
 }
@@ -44,6 +45,24 @@ void DeckLight::DisplayLine(int channel)
   matrix->drawPixel(DeckLightMatrixWidth - 1, 1, CRGB(200, 0, 0));
 
   FastLED.show();
+}
+
+void DeckLight::FlashLine(int channel)
+{
+  // Toggle LEDs on/off based on time to create a flash effect
+  bool on = (millis() / 500) % 2 == 0;
+  if (on == _isFlashOn) return;
+  _isFlashOn = on;
+
+  if (on)
+  {
+    DisplayLine(channel);
+  }
+  else
+  {
+    FastLED.clear();
+    FastLED.show();
+  }
 }
 
 void DeckLight::DrawBluetoothBar()
