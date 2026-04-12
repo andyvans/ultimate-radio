@@ -1,7 +1,7 @@
 2
 http://hip-hop.channel.whff.radio:8046/stream
-http://stream.srg-ssr.ch/m/couleur3/mp3_128
-http://stream.srg-ssr.ch/srgssr/rsj/mp3/128
+http://livestreaming-node-1.srg-ssr.ch/srgssr/couleur3/mp3/128
+http://livestreaming-node-1.srg-ssr.ch/srgssr/rsj/mp3/128
 https://streaming.brol.tech/rtfmlounge
 http://livestreaming-node-1.srg-ssr.ch/srgssr/srfvirus/mp3/128
 https://admin.stream.rinse.fm/proxy/rinse_uk/stream
