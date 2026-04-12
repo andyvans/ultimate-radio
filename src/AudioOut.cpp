@@ -64,6 +64,7 @@ void AudioOut::Setup(ChannelConfig* channels, int count, int defaultChannel)
     Serial.println("Creating MultiDecoder...");
     _multiDecoder = new MultiDecoder(*_urlStream);
     _multiDecoder->addDecoder(*_mp3Decoder, "audio/mp3");
+    _multiDecoder->addDecoder(*_mp3Decoder, "audio/mpeg");
     _multiDecoder->addDecoder(*_aacDecoder, "audio/aac");
     _multiDecoder->addDecoder(*_aacDecoder, "audio/aacp");
 
@@ -82,7 +83,7 @@ void AudioOut::Setup(ChannelConfig* channels, int count, int defaultChannel)
     Serial.println("Creating audio player...");
     _audioPlayer = new AudioPlayer(*_audioSourceUrl, *_i2sOut, *_multiDecoder);
         
-    _audioPlayer->setVolume(0.70f); // Reduce initial volume
+    _audioPlayer->setVolume(0.50f); // Reduce initial volume
 
     Serial.println("=== AudioOut setup complete ===");
 }
