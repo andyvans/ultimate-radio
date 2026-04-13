@@ -20,12 +20,16 @@ void ProcessDevices(void* parameter);
 void setup()
 {
   // Initialize UART0 explicitly with TX=43, RX=44 (ESP32-S3 defaults)
-  Serial.begin(115200, SERIAL_8N1, -1, -1);
+  Serial.begin(115200);
   delay(200);
 
   Serial.println("\n\n=== Ultimate Radio Starting ===");
 
-  radioConfig = ChannelManager::LoadChannels(WIFI_SSID, WIFI_PASSWORD, CONFIG_URL);
+  Serial.printf("Free heap: %u bytes\n", ESP.getFreeHeap());
+  Serial.printf("PSRAM size: %u bytes\n", ESP.getPsramSize());
+  Serial.printf("Free PSRAM: %u bytes\n", ESP.getFreePsram());
+
+  radioConfig = nullptr; //ChannelManager::LoadChannels(WIFI_SSID, WIFI_PASSWORD, CONFIG_URL);
   if (radioConfig == nullptr)
   {
     Serial.println("Using default channels");
