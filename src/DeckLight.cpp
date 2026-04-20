@@ -54,15 +54,18 @@ void DeckLight::FlashLine(int channel)
   if (on == _isFlashOn) return;
   _isFlashOn = on;
 
-  if (on)
+  auto color = _isFlashOn 
+    ? ColorFromPalette(purplePalette, 200 + channel)
+    : ColorFromPalette(purplePalette, 50 + channel);
+
+  // Draw only the vertical line without indicators  
+  int index = channel % DeckLightMatrixWidth;
+  for (int y = 0; y < DeckLightMatrixHeight; y++)
   {
-    DisplayLine(channel);
-  }
-  else
-  {
-    FastLED.clear();
-    FastLED.show();
-  }
+    matrix->drawPixel(index, y, color);
+  } 
+
+  FastLED.show();
 }
 
 void DeckLight::DrawBluetoothBar()

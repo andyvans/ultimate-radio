@@ -58,13 +58,7 @@ void DeviceControls::Tick()
         _deckLight->DisplayLine(_currentChannel);
         _audioOut->Start(_currentChannel);
     }
-
-    // Flash LEDs if audio stream is not active
-    if (!_audioOut->IsActive())
-    {
-        _deckLight->FlashLine(_currentChannel);
-    }
-
+   
     _encoder->Tick();
 
     // Check for position changes
@@ -87,6 +81,11 @@ void DeviceControls::Tick()
         _audioOut->Start(_currentChannel);
     }
 
+    // Flash channel line if audio stream is not active
+    if (!_audioOut->IsActive()) {
+        _deckLight->FlashLine(_currentChannel);
+    }
+    
     // Check for button presses
     EncoderSwitchState switchState = _encoder->GetSwitchState();
     if (switchState.hasNewState)
