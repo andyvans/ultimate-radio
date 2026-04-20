@@ -1,8 +1,7 @@
 2
-http://bigriver.broadcast.co.nz/bigriverfm.mp3
-http://stream.srg-ssr.ch/m/couleur3/mp3_128
-http://stream.srg-ssr.ch/srgssr/rsj/mp3/128
-https://streaming.brol.tech/rtfmlounge
-http://live1.lankaradio.com:8010/128kbps.mp3
-http://streaming.swisstxt.ch/m/drsvirus/mp3_128
-http://hip-hop.channel.whff.radio:8046/stream
+https://admin.stream.rinse.fm/proxy/rinse_uk/stream, "Rinse FM UK"
+https://radio10.pro-fhi.net/flux-trmqtiat/stream "Rinse FM France"
+http://stream.srg-ssr.ch/srgssr/rsj/mp3/128, "Radio Swiss Jazz"
+https://streaming.brol.tech/rtfmlounge, "RTFM Lounge"
+http://streaming.swisstxt.ch/m/drsvirus/mp3_128, "Dr Virus"
+http://livestreaming-node-1.srg-ssr.ch/srgssr/couleur3/mp3/128 "Couleur Swiss Radio"
