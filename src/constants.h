@@ -1,15 +1,15 @@
 // I2S audio out pins
-#define I2S_LRC_OUT 25
-#define I2S_DATA_OUT 33
-#define I2S_BCLK_OUT 32
+#define I2S_LRC_OUT 12
+#define I2S_DATA_OUT 14
+#define I2S_BCLK_OUT 13
 
 // Rotary encoder pins
-#define ENCODER_PIN_A 27
-#define ENCODER_PIN_B 26
-#define ENCODER_PIN_SWITCH 14
+#define ENCODER_PIN_A 4
+#define ENCODER_PIN_B 5
+#define ENCODER_PIN_SWITCH 6
 
 // LED matrix
-#define LED_MATRIX_PIN 12
+#define LED_MATRIX_PIN 7
 
 // Amp bluetooth on/off pin (high = on)
-#define AMP_BLUETOOTH_PIN 18                                                                  
+#define AMP_BLUETOOTH_PIN 15                                                                  

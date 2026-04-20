@@ -2,15 +2,17 @@
 #include <WiFi.h>
 
 // Define the array of fallback radio channels
-const char* ChannelManager::_defaultChannels[] = {
-    "https://stream.srg-ssr.ch/srgssr/rsc_de/mp3/128",
-    "https://stream.srg-ssr.ch/m/couleur3/mp3_128",
-    "https://stream.srg-ssr.ch/m/rsj/mp3_128",
-    "http://live1.lankaradio.com:8010/128kbps.mp3"
+const ChannelConfig ChannelManager::_defaultChannels[] = {
+    {(char*)"https://admin.stream.rinse.fm/proxy/rinse_uk/stream", (char*)"Rinse FM UK"},
+    {(char*)"https://radio10.pro-fhi.net/flux-trmqtiat/stream", (char*)"Rinse FM France"},
+    {(char*)"http://stream.srg-ssr.ch/srgssr/rsj/mp3/128", (char*)"Radio Swiss Jazz"},
+    {(char*)"https://streaming.brol.tech/rtfmlounge", (char*)"RTFM Lounge"},
+    {(char*)"http://streaming.swisstxt.ch/m/drsvirus/mp3_128", (char*)"Dr Virus"},
+    {(char*)"http://livestreaming-node-1.srg-ssr.ch/srgssr/couleur3/mp3/128", (char*)"Couleur Swiss Radio"}
 };
 
 const int ChannelManager::_defaultChannelCount = sizeof(ChannelManager::_defaultChannels) / sizeof(ChannelManager::_defaultChannels[0]);
-const int ChannelManager::_defaultChannel = 2;
+const int ChannelManager::_defaultChannel = 0;
 
 RadioConfig* ChannelManager::LoadChannels(const char* ssid, const char* password, const char* configUrl)
 {
@@ -21,7 +23,7 @@ RadioConfig* ChannelManager::LoadChannels(const char* ssid, const char* password
     WiFi.begin(ssid, password);
 
     int attempts = 0;
-    int maxAttempts = 20; // 10 seconds timeout
+    int maxAttempts = 2; // 10 seconds timeout
 
     while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts)
     {
@@ -61,8 +63,9 @@ RadioConfig* ChannelManager::LoadChannels(const char* ssid, const char* password
 RadioConfig* ChannelManager::GetDefaultChannels()
 {
     RadioConfig* config = new RadioConfig();
-    config->urls = (char**)_defaultChannels;
+    config->channels = (ChannelConfig*)_defaultChannels;
     config->channelCount = _defaultChannelCount;
     config->defaultChannel = _defaultChannel;
+    config->ownsMemory = false;
     return config;
 }

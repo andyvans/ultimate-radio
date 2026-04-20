@@ -11,14 +11,11 @@
 #include <AudioTools/Communication/AudioHttp.h>
 #include <AudioTools/Disk/AudioSourceURL.h>
 #include <AudioTools/AudioCodecs/CodecMP3Helix.h>
+#include <AudioTools/AudioCodecs/CodecAACHelix.h>
+#include <AudioTools/AudioCodecs/MultiDecoder.h>
+#include "ConfigLoader.h"
 
 using namespace audio_tools;
-
-struct RadioChannel
-{
-    const char* url;
-    const char* mimeType;
-};
 
 enum AudioMode
 {
@@ -29,14 +26,15 @@ enum AudioMode
 class AudioOut
 {
 public:
-    AudioOut();
+    AudioOut(bool supportAac);
     ~AudioOut();
-    void Setup(char** urls, int count, int defaultChannel);
+    void Setup(ChannelConfig* channels, int count, int defaultChannel);
     void Stop();
     void Start(int channel);
     void Tick();
     int GetChannelCount();
     int GetCurrentChannel();
+    const char* GetChannelName(int channel) const;
     AudioMode GetMode();
 
 private:
@@ -45,15 +43,18 @@ private:
     int _pendingChannel;
     bool _isPlaying;
     bool _usingDynamicChannels;
+    bool _supportAac;
 
     URLStreamBuffered* _urlStream;
     AudioSourceDynamicURL* _audioSourceUrl;
     I2SStream* _i2sOut;
     MP3DecoderHelix* _mp3Decoder;
+    AACDecoderHelix* _aacDecoder;
+    MultiDecoder* _multiDecoder;
     AudioPlayer* _audioPlayer;
 
     // Channel storage
-    const char** _channels;
+    ChannelConfig* _channels;
     int _channelCount;
     static const int _defaultChannelCount;
 };
