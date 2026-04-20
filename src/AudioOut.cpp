@@ -3,8 +3,9 @@
 #include "_Secrets.h"
 #include <WiFi.h>
 
-AudioOut::AudioOut()
+AudioOut::AudioOut(bool supportAac)
 {
+    _supportAac = supportAac;
     _currentChannel = 0;
     _pendingChannel = 0;
     _mode = AUDIO_MODE_OFF;
@@ -59,14 +60,17 @@ void AudioOut::Setup(ChannelConfig* channels, int count, int defaultChannel)
 
     Serial.println("Creating decoders...");
     _mp3Decoder = new MP3DecoderHelix();
-    _aacDecoder = new AACDecoderHelix();
+    _aacDecoder = _supportAac ? new AACDecoderHelix() : nullptr;
 
     Serial.println("Creating MultiDecoder...");
     _multiDecoder = new MultiDecoder(*_urlStream);
     _multiDecoder->addDecoder(*_mp3Decoder, "audio/mp3");
     _multiDecoder->addDecoder(*_mp3Decoder, "audio/mpeg");
-    _multiDecoder->addDecoder(*_aacDecoder, "audio/aac");
-    _multiDecoder->addDecoder(*_aacDecoder, "audio/aacp");
+    if (_supportAac)
+    {
+        _multiDecoder->addDecoder(*_aacDecoder, "audio/aac");
+        _multiDecoder->addDecoder(*_aacDecoder, "audio/aacp");
+    }
 
     Serial.println("Creating I2S stream...");
     _i2sOut = new I2SStream();
@@ -96,6 +100,12 @@ int AudioOut::GetChannelCount()
 int AudioOut::GetCurrentChannel()
 {
     return _currentChannel;
+}
+
+const char* AudioOut::GetChannelName(int channel) const
+{
+    if (_channels == nullptr || channel < 0 || channel >= _channelCount) return nullptr;
+    return _channels[channel].name;
 }
 
 void AudioOut::Start(int channel)

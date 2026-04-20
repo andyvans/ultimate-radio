@@ -19,7 +19,6 @@ void ProcessDevices(void* parameter);
 
 void setup()
 {
-  // Initialize UART0 explicitly with TX=43, RX=44 (ESP32-S3 defaults)
   Serial.begin(115200);
   delay(200);
 
@@ -29,14 +28,19 @@ void setup()
   Serial.printf("PSRAM size: %u bytes\n", ESP.getPsramSize());
   Serial.printf("Free PSRAM: %u bytes\n", ESP.getFreePsram());
 
-  radioConfig = nullptr; //ChannelManager::LoadChannels(WIFI_SSID, WIFI_PASSWORD, CONFIG_URL);
+  // AAC support requires PSRAM due to the larger buffers
+  bool supportAac = ESP.getPsramSize() > 0;
+  if (!supportAac)
+    Serial.println("No PSRAM detected - AAC support disabled");
+
+  radioConfig = ChannelManager::LoadChannels(WIFI_SSID, WIFI_PASSWORD, CONFIG_URL);
   if (radioConfig == nullptr)
   {
     Serial.println("Using default channels");
     radioConfig = ChannelManager::GetDefaultChannels();
   }
 
-  audioOut = new AudioOut();
+  audioOut = new AudioOut(supportAac);
   audioOut->Setup(radioConfig->channels, radioConfig->channelCount, radioConfig->defaultChannel);
 
   deckLight = new DeckLight();

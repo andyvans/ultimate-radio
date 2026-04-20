@@ -1,6 +1,7 @@
 #include "ConfigLoader.h"
 #include <WiFiClientSecure.h>
 #include <AudioTools.h>
+#include <ctype.h>
 
 using namespace audio_tools;
 
@@ -89,11 +90,15 @@ bool ConfigLoader::ParseConfig(const char* data, int dataLen, RadioConfig& confi
             continue;
 
         int lineLen = GetLineLength(data, lineStart, i);
-        bool skip = (lineLen == 0 || data[lineStart] == '#');
+        int trimmedStart = lineStart;
+        int trimmedLen = lineLen;
+        TrimRange(data, trimmedStart, trimmedLen);
+
+        bool skip = (trimmedLen == 0 || data[trimmedStart] == '#');
 
         if (!skip && lineNum == 0)
         {
-            char* numStr = AllocateString(data, lineStart, lineLen, 10);
+            char* numStr = AllocateString(data, trimmedStart, trimmedLen, 10);
             if (numStr != nullptr)
             {
                 config.defaultChannel = atoi(numStr);
@@ -104,14 +109,70 @@ bool ConfigLoader::ParseConfig(const char* data, int dataLen, RadioConfig& confi
         }
         else if (!skip && config.channelCount < MAX_CHANNELS)
         {
-            char* url = AllocateString(data, lineStart, lineLen, MAX_URL_LENGTH);
+            int commaPos = -1;
+            int lineEnd = trimmedStart + trimmedLen;
+            for (int j = trimmedStart; j < lineEnd; j++)
+            {
+                if (data[j] == ',')
+                {
+                    commaPos = j;
+                    break;
+                }
+            }
+
+            int urlStart = trimmedStart;
+            int urlLen = trimmedLen;
+            int nameStart = 0;
+            int nameLen = 0;
+
+            if (commaPos >= 0)
+            {
+                urlLen = commaPos - trimmedStart;
+                nameStart = commaPos + 1;
+                nameLen = lineEnd - nameStart;
+            }
+
+            TrimRange(data, urlStart, urlLen);
+            if (nameLen > 0)
+            {
+                TrimRange(data, nameStart, nameLen);
+                TrimQuotes(data, nameStart, nameLen);
+            }
+
+            char* url = nullptr;
+            char* name = nullptr;
+
+            if (urlLen > 0)
+            {
+                url = AllocateString(data, urlStart, urlLen, MAX_URL_LENGTH);
+            }
+
             if (url != nullptr)
             {
+                if (nameLen > 0)
+                {
+                    name = AllocateString(data, nameStart, nameLen, MAX_NAME_LENGTH);
+                }
+
+                // Backward-compatible fallback when no name is provided.
+                if (name == nullptr)
+                {
+                    name = AllocateString(data, urlStart, urlLen, MAX_NAME_LENGTH);
+                }
+
                 config.channels[config.channelCount].url = url;
+                config.channels[config.channelCount].name = name;
+
                 Serial.print("Channel ");
                 Serial.print(config.channelCount);
-                Serial.print(": ");
+                Serial.print(" URL: ");
                 Serial.println(url);
+
+                Serial.print("Channel ");
+                Serial.print(config.channelCount);
+                Serial.print(" Name: ");
+                Serial.println(name != nullptr ? name : "");
+
                 config.channelCount++;
             }
         }
@@ -165,4 +226,32 @@ char* ConfigLoader::AllocateString(const char* data, int start, int length, int 
         str[copyLen] = '\0';
     }
     return str;
+}
+
+void ConfigLoader::TrimRange(const char* data, int& start, int& length)
+{
+    while (length > 0 && isspace((unsigned char)data[start]))
+    {
+        start++;
+        length--;
+    }
+
+    while (length > 0 && isspace((unsigned char)data[start + length - 1]))
+    {
+        length--;
+    }
+}
+
+void ConfigLoader::TrimQuotes(const char* data, int& start, int& length)
+{
+    if (length < 2) return;
+
+    char first = data[start];
+    char last = data[start + length - 1];
+
+    if ((first == '"' && last == '"') || (first == '\'' && last == '\''))
+    {
+        start++;
+        length -= 2;
+    }
 }

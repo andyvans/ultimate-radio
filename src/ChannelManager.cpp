@@ -3,12 +3,12 @@
 
 // Define the array of fallback radio channels
 const ChannelConfig ChannelManager::_defaultChannels[] = {
-    {(char*)"https://admin.stream.rinse.fm/proxy/rinse_uk/stream"},
-    {(char*)"http://livestreaming-node-1.srg-ssr.ch/srgssr/couleur3/mp3/128"},
-    {(char*)"http://livestreaming-node-1.srg-ssr.ch/srgssr/rsj/mp3/128"},
-    {(char*)"https://streaming.brol.tech/rtfmlounge"},
-    {(char*)"http://livestreaming-node-1.srg-ssr.ch/srgssr/srfvirus/mp3/128"},
-    {(char*)"http://hip-hop.channel.whff.radio:8046/stream"}
+    {(char*)"https://admin.stream.rinse.fm/proxy/rinse_uk/stream", (char*)"Rinse FM UK"},
+    {(char*)"https://radio10.pro-fhi.net/flux-trmqtiat/stream", (char*)"Rinse FM France"},
+    {(char*)"http://stream.srg-ssr.ch/srgssr/rsj/mp3/128", (char*)"Radio Swiss Jazz"},
+    {(char*)"https://streaming.brol.tech/rtfmlounge", (char*)"RTFM Lounge"},
+    {(char*)"http://streaming.swisstxt.ch/m/drsvirus/mp3_128", (char*)"Dr Virus"},
+    {(char*)"http://livestreaming-node-1.srg-ssr.ch/srgssr/couleur3/mp3/128", (char*)"Couleur Swiss Radio"}
 };
 
 const int ChannelManager::_defaultChannelCount = sizeof(ChannelManager::_defaultChannels) / sizeof(ChannelManager::_defaultChannels[0]);

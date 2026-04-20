@@ -3,14 +3,15 @@
 
 #define MAX_CHANNELS 10
 #define MAX_URL_LENGTH 128
+#define MAX_NAME_LENGTH 64
 
 struct ChannelConfig
 {
     char* url;
+    char* name;
 
-    ChannelConfig() : url(nullptr) {}
-
-    ChannelConfig(char* url) : url(url) {}
+    ChannelConfig() : url(nullptr), name(nullptr) {}
+    ChannelConfig(char* url, char* name) : url(url), name(name) {}
 };
 
 struct RadioConfig
@@ -29,6 +30,7 @@ struct RadioConfig
             for (int i = 0; i < channelCount; i++)
             {
                 if (channels[i].url != nullptr) free(channels[i].url);
+                if (channels[i].name != nullptr) free(channels[i].name);
             }
             delete[] channels;
         }
@@ -46,4 +48,6 @@ private:
     static int GetLineLength(const char* data, int start, int end);
     static int SkipLineEnding(const char* data, int pos, int dataLen);
     static char* AllocateString(const char* data, int start, int length, int maxLen);
+    static void TrimRange(const char* data, int& start, int& length);
+    static void TrimQuotes(const char* data, int& start, int& length);
 };

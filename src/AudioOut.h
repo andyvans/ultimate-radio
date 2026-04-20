@@ -26,7 +26,7 @@ enum AudioMode
 class AudioOut
 {
 public:
-    AudioOut();
+    AudioOut(bool supportAac);
     ~AudioOut();
     void Setup(ChannelConfig* channels, int count, int defaultChannel);
     void Stop();
@@ -34,6 +34,7 @@ public:
     void Tick();
     int GetChannelCount();
     int GetCurrentChannel();
+    const char* GetChannelName(int channel) const;
     AudioMode GetMode();
 
 private:
@@ -42,6 +43,7 @@ private:
     int _pendingChannel;
     bool _isPlaying;
     bool _usingDynamicChannels;
+    bool _supportAac;
 
     URLStreamBuffered* _urlStream;
     AudioSourceDynamicURL* _audioSourceUrl;
