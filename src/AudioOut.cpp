@@ -87,8 +87,6 @@ void AudioOut::Setup(ChannelConfig* channels, int count, int defaultChannel)
     Serial.println("Creating audio player...");
     _audioPlayer = new AudioPlayer(*_audioSourceUrl, *_i2sOut, *_multiDecoder);
         
-    _audioPlayer->setVolume(0.50f); // Reduce initial volume
-
     _audioPlayer->setVolume(0.5f); // Reduce as amp is grunty
 
     Serial.println("=== AudioOut setup complete ===");
@@ -112,6 +110,7 @@ const char* AudioOut::GetChannelName(int channel) const
 
 void AudioOut::Start(int channel)
 {
+    if (_channels == nullptr || _channelCount <= 0) return;
     if (channel < 0) channel = 0;
     if (channel >= _channelCount) channel = _channelCount - 1;
     if (channel != _pendingChannel)
@@ -136,6 +135,7 @@ AudioMode AudioOut::GetMode()
 void AudioOut::Tick()
 {
     if (_audioPlayer == nullptr) return;
+    if (_channels == nullptr || _channelCount <= 0) return;
 
     if (_mode == AUDIO_MODE_OFF && _isPlaying)
     {

@@ -11,6 +11,7 @@ OneRotaryEncoder::OneRotaryEncoder(int pinA, int pinB, int pinSwitch)
   encoder = new RotaryEncoder(pinA, pinB, RotaryEncoder::LatchMode::TWO03);
   button = new OneButton(pinSwitch, true, true);
   button->attachClick([](void* scope) { ((OneRotaryEncoder*)scope)->Clicked();}, this);
+  button->attachDoubleClick([](void* scope) { ((OneRotaryEncoder*)scope)->DoubleClicked();}, this);
   button->attachLongPressStart([](void* scope) { ((OneRotaryEncoder*)scope)->LongPressed();}, this);
 }
 

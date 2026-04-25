@@ -38,10 +38,10 @@ public:
     AudioMode GetMode();
 
 private:
-    AudioMode _mode;
-    int _currentChannel;
-    int _pendingChannel;
-    bool _isPlaying;
+    volatile AudioMode _mode;
+    volatile int _currentChannel;
+    volatile int _pendingChannel;
+    volatile bool _isPlaying;
     bool _usingDynamicChannels;
     bool _supportAac;
 

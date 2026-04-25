@@ -1,5 +1,4 @@
 #pragma once
-#include <functional> // For std::function
 #include <OneButton.h>
 #include <RotaryEncoder.h>
 

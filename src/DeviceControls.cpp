@@ -3,6 +3,7 @@
 
 DeviceControls::DeviceControls() :
     _audioOut(nullptr),
+    _deckLight(nullptr),
     _currentChannel(0),
     _pendingChannel(-1),
     _lastPositionChangeTime(0),
