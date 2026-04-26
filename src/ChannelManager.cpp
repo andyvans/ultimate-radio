@@ -13,49 +13,27 @@ const ChannelConfig ChannelManager::_defaultChannels[] = {
 
 const int ChannelManager::_defaultChannelCount = sizeof(ChannelManager::_defaultChannels) / sizeof(ChannelManager::_defaultChannels[0]);
 const int ChannelManager::_defaultChannel = 0;
+const float ChannelManager::_defaultVolume = 0.5f;
 
-RadioConfig* ChannelManager::LoadChannels(const char* ssid, const char* password, const char* configUrl)
+RadioConfig* ChannelManager::LoadChannels(const char* configUrl)
 {
-    RadioConfig* radioConfig = nullptr;
-
-    // Connect to WiFi
-    Serial.println("Connecting to WiFi...");
-    WiFi.begin(ssid, password);
-
-    int attempts = 0;
-    int maxAttempts = 20; // 10 seconds timeout
-
-    while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts)
+    if (WiFi.status() != WL_CONNECTED)
     {
-        delay(500);
-        Serial.print(".");
-        attempts++;
+        Serial.println("WiFi not connected, cannot load config");
+        return nullptr;
     }
 
-    if (WiFi.status() == WL_CONNECTED)
+    Serial.println("Loading radio configuration...");
+    RadioConfig* radioConfig = new RadioConfig();
+    if (ConfigLoader::LoadConfig(configUrl, *radioConfig))
     {
-        Serial.println("\nWiFi connected!");
-        Serial.print("IP: ");
-        Serial.println(WiFi.localIP());
-
-        // Try to load configuration from URL
-        Serial.println("Loading radio configuration...");
-        radioConfig = new RadioConfig();
-        if (ConfigLoader::LoadConfig(configUrl, *radioConfig))
-        {
-            Serial.println("Config loaded successfully");
-            return radioConfig;
-        }
-        else
-        {
-            Serial.println("Config load failed");
-            delete radioConfig;
-            return nullptr;
-        }
+        Serial.println("Config loaded successfully");
+        return radioConfig;
     }
     else
     {
-        Serial.println("\nWiFi connection failed");
+        Serial.println("Config load failed");
+        delete radioConfig;
         return nullptr;
     }
 }
@@ -66,6 +44,7 @@ RadioConfig* ChannelManager::GetDefaultChannels()
     config->channels = (ChannelConfig*)_defaultChannels;
     config->channelCount = _defaultChannelCount;
     config->defaultChannel = _defaultChannel;
+    config->volume = _defaultVolume;
     config->ownsMemory = false;
     return config;
 }

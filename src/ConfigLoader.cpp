@@ -1,7 +1,6 @@
 #include "ConfigLoader.h"
 #include <WiFiClientSecure.h>
 #include <AudioTools.h>
-#include <ctype.h>
 
 using namespace audio_tools;
 
@@ -25,25 +24,17 @@ bool ConfigLoader::LoadConfig(const char* configUrl, RadioConfig& config)
         return false;
     }
 
-    // Read response into buffer
-    const int bufferSize = 4096;
-    char* buffer = (char*)malloc(bufferSize);
-    if (buffer == nullptr)
-    {
-        Serial.println("Failed to allocate buffer for config");
-        http.end();
-        return false;
-    }
+    // Read response into a String
+    String data;
+    const int chunkSize = 512;
+    uint8_t chunk[chunkSize];
 
-    int bytesRead = 0;
-    int totalRead = 0;
-
-    while (http.available() && totalRead < bufferSize - 1)
+    while (http.available())
     {
-        bytesRead = http.readBytes((uint8_t*)(buffer + totalRead), bufferSize - totalRead - 1);
+        int bytesRead = http.readBytes(chunk, chunkSize);
         if (bytesRead > 0)
         {
-            totalRead += bytesRead;
+            data.concat((const char*)chunk, bytesRead);
         }
         else
         {
@@ -51,22 +42,18 @@ bool ConfigLoader::LoadConfig(const char* configUrl, RadioConfig& config)
         }
     }
 
-    buffer[totalRead] = '\0';
     http.end();
 
     Serial.print("Downloaded ");
-    Serial.print(totalRead);
+    Serial.print(data.length());
     Serial.println(" bytes");
 
-    bool success = ParseConfig(buffer, totalRead, config);
-    free(buffer);
-
-    return success;
+    return ParseConfig(data, config);
 }
 
-bool ConfigLoader::ParseConfig(const char* data, int dataLen, RadioConfig& config)
+bool ConfigLoader::ParseConfig(const String& data, RadioConfig& config)
 {
-    if (data == nullptr || dataLen == 0)
+    if (data.length() == 0)
     {
         Serial.println("No data to parse");
         return false;
@@ -79,108 +66,79 @@ bool ConfigLoader::ParseConfig(const char* data, int dataLen, RadioConfig& confi
         return false;
     }
 
-    int lineStart = 0;
-    int lineNum = 0;
     config.channelCount = 0;
     config.defaultChannel = 0;
+    int lineNum = 0;
+    int pos = 0;
 
-    for (int i = 0; i <= dataLen; i++)
+    while (pos <= (int)data.length())
     {
-        if (i != dataLen && !IsLineEnding(data[i]))
+        // Find end of line
+        int eol = data.indexOf('\n', pos);
+        if (eol < 0) eol = data.length();
+
+        String line = data.substring(pos, eol);
+        line.trim();
+
+        // Strip trailing \r
+        if (line.endsWith("\r"))
+            line.remove(line.length() - 1);
+
+        pos = eol + 1;
+
+        // Skip empty lines and comments
+        if (line.length() == 0 || line[0] == '#')
             continue;
 
-        int lineLen = GetLineLength(data, lineStart, i);
-        int trimmedStart = lineStart;
-        int trimmedLen = lineLen;
-        TrimRange(data, trimmedStart, trimmedLen);
-
-        bool skip = (trimmedLen == 0 || data[trimmedStart] == '#');
-
-        if (!skip && lineNum == 0)
+        if (lineNum == 0)
         {
-            char* numStr = AllocateString(data, trimmedStart, trimmedLen, 10);
-            if (numStr != nullptr)
-            {
-                config.defaultChannel = atoi(numStr);
-                Serial.print("Default channel: ");
-                Serial.println(config.defaultChannel);
-                free(numStr);
-            }
+            config.defaultChannel = line.toInt();
+            Serial.print("Default channel: ");
+            Serial.println(config.defaultChannel);
         }
-        else if (!skip && config.channelCount < MAX_CHANNELS)
+        else if (lineNum == 1)
         {
-            int commaPos = -1;
-            int lineEnd = trimmedStart + trimmedLen;
-            for (int j = trimmedStart; j < lineEnd; j++)
-            {
-                if (data[j] == ',')
-                {
-                    commaPos = j;
-                    break;
-                }
-            }
-
-            int urlStart = trimmedStart;
-            int urlLen = trimmedLen;
-            int nameStart = 0;
-            int nameLen = 0;
+            config.volume = line.toFloat();
+            Serial.print("Volume: ");
+            Serial.println(config.volume);
+        }
+        else if (config.channelCount < MAX_CHANNELS)
+        {
+            int commaPos = line.indexOf(',');
+            String urlStr;
+            String nameStr;
 
             if (commaPos >= 0)
             {
-                urlLen = commaPos - trimmedStart;
-                nameStart = commaPos + 1;
-                nameLen = lineEnd - nameStart;
+                urlStr = line.substring(0, commaPos);
+                nameStr = line.substring(commaPos + 1);
             }
-
-            TrimRange(data, urlStart, urlLen);
-            if (nameLen > 0)
+            else
             {
-                TrimRange(data, nameStart, nameLen);
-                TrimQuotes(data, nameStart, nameLen);
+                urlStr = line;
             }
 
-            char* url = nullptr;
-            char* name = nullptr;
+            urlStr.trim();
+            nameStr.trim();
 
-            if (urlLen > 0)
-            {
-                url = AllocateString(data, urlStart, urlLen, MAX_URL_LENGTH);
-            }
-
+            char* url = DuplicateString(urlStr, MAX_URL_LENGTH);
             if (url != nullptr)
             {
-                if (nameLen > 0)
-                {
-                    name = AllocateString(data, nameStart, nameLen, MAX_NAME_LENGTH);
-                }
-
-                // Backward-compatible fallback when no name is provided.
-                if (name == nullptr)
-                {
-                    name = AllocateString(data, urlStart, urlLen, MAX_NAME_LENGTH);
-                }
+                char* name = nameStr.length() > 0
+                    ? DuplicateString(nameStr, MAX_NAME_LENGTH)
+                    : DuplicateString(urlStr, MAX_NAME_LENGTH);
 
                 config.channels[config.channelCount].url = url;
                 config.channels[config.channelCount].name = name;
 
-                Serial.print("Channel ");
-                Serial.print(config.channelCount);
-                Serial.print(" URL: ");
-                Serial.println(url);
-
-                Serial.print("Channel ");
-                Serial.print(config.channelCount);
-                Serial.print(" Name: ");
-                Serial.println(name != nullptr ? name : "");
+                Serial.printf("Channel %d URL: %s\n", config.channelCount, url);
+                Serial.printf("Channel %d Name: %s\n", config.channelCount, name ? name : "");
 
                 config.channelCount++;
             }
         }
 
-        if (!skip) lineNum++;
-
-        i = SkipLineEnding(data, i, dataLen);
-        lineStart = i + 1;
+        lineNum++;
     }
 
     Serial.print("Loaded ");
@@ -190,68 +148,14 @@ bool ConfigLoader::ParseConfig(const char* data, int dataLen, RadioConfig& confi
     return config.channelCount > 0;
 }
 
-bool ConfigLoader::IsLineEnding(char c)
+char* ConfigLoader::DuplicateString(const String& str, int maxLen)
 {
-    return c == '\n' || c == '\r';
-}
-
-int ConfigLoader::GetLineLength(const char* data, int start, int end)
-{
-    int length = end - start;
-    // Strip trailing \r if present
-    if (length > 0 && data[end - 1] == '\r')
+    int copyLen = min((int)str.length(), maxLen - 1);
+    char* out = (char*)malloc(copyLen + 1);
+    if (out != nullptr)
     {
-        length--;
+        memcpy(out, str.c_str(), copyLen);
+        out[copyLen] = '\0';
     }
-    return length;
-}
-
-int ConfigLoader::SkipLineEnding(const char* data, int pos, int dataLen)
-{
-    // Skip \r\n sequence
-    if (pos < dataLen && data[pos] == '\r' && pos + 1 < dataLen && data[pos + 1] == '\n')
-    {
-        return pos + 1;
-    }
-    return pos;
-}
-
-char* ConfigLoader::AllocateString(const char* data, int start, int length, int maxLen)
-{
-    int copyLen = min(length, maxLen - 1);
-    char* str = (char*)malloc(copyLen + 1);
-    if (str != nullptr)
-    {
-        strncpy(str, data + start, copyLen);
-        str[copyLen] = '\0';
-    }
-    return str;
-}
-
-void ConfigLoader::TrimRange(const char* data, int& start, int& length)
-{
-    while (length > 0 && isspace((unsigned char)data[start]))
-    {
-        start++;
-        length--;
-    }
-
-    while (length > 0 && isspace((unsigned char)data[start + length - 1]))
-    {
-        length--;
-    }
-}
-
-void ConfigLoader::TrimQuotes(const char* data, int& start, int& length)
-{
-    if (length < 2) return;
-
-    char first = data[start];
-    char last = data[start + length - 1];
-
-    if ((first == '"' && last == '"') || (first == '\'' && last == '\''))
-    {
-        start++;
-        length -= 2;
-    }
+    return out;
 }

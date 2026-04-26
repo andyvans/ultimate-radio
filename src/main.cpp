@@ -1,9 +1,9 @@
 #include <Arduino.h>
+#include <WiFiManager.h>
 #include "AudioOut.h"
 #include "DeviceControls.h"
 #include "DeckLight.h"
 #include "ChannelManager.h"
-#include "_Secrets.h"
 
 // Configuration URL - change this to your config file location
 #define CONFIG_URL "https://raw.githubusercontent.com/andyvans/ultimate-radio/main/radio-config.txt"
@@ -28,12 +28,28 @@ void setup()
   Serial.printf("PSRAM size: %u bytes\n", ESP.getPsramSize());
   Serial.printf("Free PSRAM: %u bytes\n", ESP.getFreePsram());
 
+  // Connect to WiFi using WiFiManager captive portal
+  WiFiManager wm;
+  wm.setConfigPortalTimeout(180); // 3 minute timeout
+  Serial.println("Connecting to WiFi...");
+  if (wm.autoConnect("UltimateRadio-Setup"))
+  {
+    Serial.println("WiFi connected!");
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+  }
+  else
+  {
+    Serial.println("WiFi connection failed - restarting...");
+    ESP.restart();
+  }
+
   // AAC support requires PSRAM due to the larger buffers
   bool supportAac = ESP.getPsramSize() > 0;
   if (!supportAac)
     Serial.println("No PSRAM detected - AAC support disabled");
 
-  radioConfig = ChannelManager::LoadChannels(WIFI_SSID, WIFI_PASSWORD, CONFIG_URL);
+  radioConfig = ChannelManager::LoadChannels(CONFIG_URL);
   if (radioConfig == nullptr)
   {
     Serial.println("Using default channels");
@@ -41,7 +57,7 @@ void setup()
   }
 
   audioOut = new AudioOut(supportAac);
-  audioOut->Setup(radioConfig->channels, radioConfig->channelCount, radioConfig->defaultChannel);
+  audioOut->Setup(radioConfig);
 
   deckLight = new DeckLight();
   deckLight->Setup();

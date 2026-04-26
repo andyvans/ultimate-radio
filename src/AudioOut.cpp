@@ -1,7 +1,5 @@
 #include "AudioOut.h"
 #include "AudioTools/AudioCodecs/CodecMP3Helix.h"
-#include "_Secrets.h"
-#include <WiFi.h>
 
 AudioOut::AudioOut(bool supportAac)
 {
@@ -20,16 +18,16 @@ AudioOut::~AudioOut()
     // Note: Dynamic channel memory is managed by RadioConfig
 }
 
-void AudioOut::Setup(ChannelConfig* channels, int count, int defaultChannel)
+void AudioOut::Setup(RadioConfig* config)
 {
     Serial.println("=== Setting up AudioOut ===");
 
-    if (channels != nullptr && count > 0)
+    if (config->channels != nullptr && config->channelCount > 0)
     {
-        _channels = channels;
-        _channelCount = count;
+        _channels = config->channels;
+        _channelCount = config->channelCount;
         Serial.print("Using ");
-        Serial.print(count);
+        Serial.print(_channelCount);
         Serial.println(" dynamically loaded channels");
     }
     else
@@ -38,18 +36,16 @@ void AudioOut::Setup(ChannelConfig* channels, int count, int defaultChannel)
         _channels = nullptr;
         _channelCount = 0;
     }
-    if (defaultChannel >= 0 && defaultChannel < _channelCount)
+    if (config->defaultChannel >= 0 && config->defaultChannel < _channelCount)
     {
-        _currentChannel = defaultChannel;
-        _pendingChannel = defaultChannel;
+        _currentChannel = config->defaultChannel;
+        _pendingChannel = config->defaultChannel;
     }
 
     AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Warning);
 
-    Serial.println("Creating URLStream (WiFi connecting)...");
-    _urlStream = new URLStreamBuffered(WIFI_SSID, WIFI_PASSWORD);
-
-    Serial.println("WiFi connected! Creating AudioSourceURL...");
+    Serial.println("Creating URLStream...");
+    _urlStream = new URLStreamBuffered();
     _audioSourceUrl = new AudioSourceDynamicURL(*_urlStream, nullptr, _currentChannel);
 
     // Add all the URLs to the dynamic source
@@ -87,7 +83,7 @@ void AudioOut::Setup(ChannelConfig* channels, int count, int defaultChannel)
     Serial.println("Creating audio player...");
     _audioPlayer = new AudioPlayer(*_audioSourceUrl, *_i2sOut, *_multiDecoder);
         
-    _audioPlayer->setVolume(0.5f); // Reduce as amp is grunty
+    _audioPlayer->setVolume(config->volume); // Set volume from config
 
     Serial.println("=== AudioOut setup complete ===");
 }

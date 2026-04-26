@@ -19,9 +19,10 @@ struct RadioConfig
     ChannelConfig* channels;
     int channelCount;
     int defaultChannel;
+    float volume;
     bool ownsMemory;
 
-    RadioConfig() : channels(nullptr), channelCount(0), defaultChannel(0), ownsMemory(true) {}
+    RadioConfig() : channels(nullptr), channelCount(0), defaultChannel(0), volume(0.5f), ownsMemory(true) {}
 
     ~RadioConfig()
     {
@@ -43,11 +44,6 @@ public:
     static bool LoadConfig(const char* configUrl, RadioConfig& config);
 
 private:
-    static bool ParseConfig(const char* data, int dataLen, RadioConfig& config);
-    static bool IsLineEnding(char c);
-    static int GetLineLength(const char* data, int start, int end);
-    static int SkipLineEnding(const char* data, int pos, int dataLen);
-    static char* AllocateString(const char* data, int start, int length, int maxLen);
-    static void TrimRange(const char* data, int& start, int& length);
-    static void TrimQuotes(const char* data, int& start, int& length);
+    static bool ParseConfig(const String& data, RadioConfig& config);
+    static char* DuplicateString(const String& str, int maxLen);
 };

@@ -28,7 +28,7 @@ class AudioOut
 public:
     AudioOut(bool supportAac);
     ~AudioOut();
-    void Setup(ChannelConfig* channels, int count, int defaultChannel);
+    void Setup(RadioConfig* config);
     void Stop();
     void Start(int channel);
     void Tick();
