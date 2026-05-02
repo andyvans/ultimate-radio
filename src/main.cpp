@@ -28,6 +28,8 @@ void setup()
   Serial.printf("PSRAM size: %u bytes\n", ESP.getPsramSize());
   Serial.printf("Free PSRAM: %u bytes\n", ESP.getFreePsram());
 
+  WiFi.setHostname("UltimateRadio");
+
   // Connect to WiFi using WiFiManager captive portal
   WiFiManager wm;
   wm.setConfigPortalTimeout(180); // 3 minute timeout
