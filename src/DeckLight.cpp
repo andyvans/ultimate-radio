@@ -27,8 +27,31 @@ void DeckLight::Setup()
   FastLED.clear();
 }
 
-void DeckLight::DisplayLine(int channel)
+void DeckLight::Tick()
 {
+  if (isPlaying) return;
+
+  unsigned long nowMs = millis();
+  if (nowMs - lastLoadingFlashMs < 250) return;
+
+  lastLoadingFlashMs = nowMs;
+  loadingIndicatorsOn = !loadingIndicatorsOn;
+
+  CRGB indicatorColor = loadingIndicatorsOn ? CRGB(200, 0, 0) : CRGB::Black;
+  matrix->drawPixel(0, 1, indicatorColor);
+  matrix->drawPixel(DeckLightMatrixWidth - 1, 1, indicatorColor);
+  FastLED.show();
+}
+
+void DeckLight::SetIsPlaying(bool isPlaying)
+{
+  this->isPlaying = isPlaying;
+  if (isPlaying) DisplayLine(channel);
+}
+
+void DeckLight::DisplayLine(int channel)
+{  
+  this->channel = channel;
   FastLED.clear();
 
   // Draw a vertical line for the selected channel
@@ -47,7 +70,7 @@ void DeckLight::DisplayLine(int channel)
 }
 
 void DeckLight::DrawBluetoothBar()
-{
+{  
   FastLED.clear();
 
   // Draw a blue bar across the middle row    

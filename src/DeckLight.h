@@ -15,15 +15,22 @@ class DeckLight
 public:
   DeckLight();
   void Setup();
+  void SetIsPlaying(bool isPlaying);
   void DisplayLine(int band);
   void DrawBluetoothBar();
+  void Tick();
 
 private:
   // FastLed globals
   static const int BrightnessSettings[];
   static CRGBPalette16 purplePalette;
-  
+
   // RGB LED matrix
   FastLED_NeoMatrix* matrix;
   CRGB matrixLeds[DeckLightLedCount];
+
+  int channel = 0;
+  unsigned long lastLoadingFlashMs = 0;
+  bool loadingIndicatorsOn = false;
+  bool isPlaying = false;
 };

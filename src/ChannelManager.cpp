@@ -4,7 +4,6 @@
 // Define the array of fallback radio channels
 const ChannelConfig ChannelManager::_defaultChannels[] = {
     {const_cast<char*>("https://admin.stream.rinse.fm/proxy/rinse_uk/stream"), const_cast<char*>("Rinse FM UK")},
-    {const_cast<char*>("https://radio10.pro-fhi.net/flux-trmqtiat/stream"), const_cast<char*>("Rinse FM France")},
     {const_cast<char*>("http://stream.srg-ssr.ch/srgssr/rsj/mp3/128"), const_cast<char*>("Radio Swiss Jazz")},
     {const_cast<char*>("https://streaming.brol.tech/rtfmlounge"), const_cast<char*>("RTFM Lounge")},
     {const_cast<char*>("http://streaming.swisstxt.ch/m/drsvirus/mp3_128"), const_cast<char*>("Dr Virus")},

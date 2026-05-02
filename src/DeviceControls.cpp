@@ -60,6 +60,7 @@ void DeviceControls::Tick()
         _audioOut->Start(_currentChannel);
     }
 
+    _deckLight->SetIsPlaying(_audioOut->IsPlaying());
     _encoder->Tick();
 
     // Check for position changes

@@ -28,6 +28,9 @@ void setup()
   Serial.printf("PSRAM size: %u bytes\n", ESP.getPsramSize());
   Serial.printf("Free PSRAM: %u bytes\n", ESP.getFreePsram());
 
+  deckLight = new DeckLight();
+  deckLight->Setup();
+
   WiFi.setHostname("UltimateRadio");
 
   // Connect to WiFi using WiFiManager captive portal
@@ -61,9 +64,6 @@ void setup()
   audioOut = new AudioOut(supportAac);
   audioOut->Setup(radioConfig);
 
-  deckLight = new DeckLight();
-  deckLight->Setup();
-
   deviceControls = new DeviceControls();
   deviceControls->Setup(audioOut, deckLight);
 
@@ -90,10 +90,9 @@ void ProcessDevices(void* parameter)
 {
   for (;;)
   {
-    if (deviceControls != nullptr)
-    {
-      deviceControls->Tick();
-    }
+    if (deviceControls != nullptr) deviceControls->Tick();
+    if (deckLight != nullptr) deckLight->Tick();
+
     vTaskDelay(pdMS_TO_TICKS(5));
   }
 }

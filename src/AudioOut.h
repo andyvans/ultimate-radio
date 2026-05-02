@@ -36,6 +36,7 @@ public:
     int GetCurrentChannel();
     const char* GetChannelName(int channel) const;
     AudioMode GetMode();
+    bool IsPlaying();
 
 private:
     volatile AudioMode _mode;

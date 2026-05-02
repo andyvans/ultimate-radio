@@ -158,3 +158,8 @@ void AudioOut::Tick()
 
     _audioPlayer->copy();
 }
+
+bool AudioOut::IsPlaying()
+{
+    return _isPlaying && _audioPlayer != nullptr && _audioPlayer->isActive();
+}
