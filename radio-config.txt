@@ -1,4 +1,4 @@
-2
+1
 0.5
 https://admin.stream.rinse.fm/proxy/rinse_uk/stream, Rinse FM UK
 http://stream.srg-ssr.ch/srgssr/rsj/mp3/128, Radio Swiss Jazz
