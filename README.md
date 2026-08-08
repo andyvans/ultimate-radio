@@ -1,4 +1,4 @@
-# 1955 Ultimate Radio upgrade with ESP32 MP3 streaming
+# 1955 Ultimate Radio upgrade with AAC & MP3 streaming
 
 Full details here: [https://www.codify.nz/ultimate-radio-1955/](https://www.codify.nz/ultimate-radio-1955/)
 
