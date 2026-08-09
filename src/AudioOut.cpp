@@ -42,7 +42,9 @@ void AudioOut::Setup(RadioConfig* config)
         _pendingChannel = config->defaultChannel;
     }
 
+#if USE_AUDIO_LOGGING
     AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Warning);
+#endif   
 
     Serial.println("Creating URLStream...");
     _urlStream = new URLStreamBuffered();
