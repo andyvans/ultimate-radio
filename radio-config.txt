@@ -2,7 +2,7 @@
 0.5
 https://admin.stream.rinse.fm/proxy/rinse_uk/stream, Rinse FM UK
 http://stream.srg-ssr.ch/srgssr/rsj/mp3/128, Radio Swiss Jazz
-https://ice2.somafm.com/synphaera-64-aac, Synphaera Radio
 https://streaming.brol.tech/rtfmlounge, RTFM Lounge
 http://streaming.swisstxt.ch/m/drsvirus/mp3_128, Dr Virus
 http://livestreaming-node-1.srg-ssr.ch/srgssr/couleur3/mp3/128, Couleur Swiss Radio
+https://ice2.somafm.com/synphaera-64-aac, Synphaera Radio
