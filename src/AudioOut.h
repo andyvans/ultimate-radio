@@ -26,6 +26,11 @@ enum AudioMode
 class AudioOut
 {
 public:
+    // Streaming buffer tuning: prefer smaller chunks with more buffers.
+    static constexpr int kUrlBufferSize = 1024;
+    static constexpr int kUrlBufferCount = 64;
+    static constexpr int kPlayerCopyBufferSize = 4096;
+
     AudioOut(bool supportAac);
     ~AudioOut();
     void Setup(RadioConfig* config);
@@ -58,4 +63,7 @@ private:
     ChannelConfig* _channels;
     int _channelCount;
     static const int _defaultChannelCount;
+
+    static void HandleStreamChange(Stream* stream, void* reference);
+    void OnStreamChanged(Stream* stream);
 };

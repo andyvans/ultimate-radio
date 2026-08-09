@@ -46,6 +46,7 @@ void AudioOut::Setup(RadioConfig* config)
 
     Serial.println("Creating URLStream...");
     _urlStream = new URLStreamBuffered();
+    _urlStream->setBufferSize(kUrlBufferSize, kUrlBufferCount);
     _audioSourceUrl = new AudioSourceDynamicURL(*_urlStream, nullptr, _currentChannel);
 
     // Add all the URLs to the dynamic source
@@ -81,9 +82,11 @@ void AudioOut::Setup(RadioConfig* config)
     _i2sOut->begin(configOut);
 
     Serial.println("Creating audio player...");
-    _audioPlayer = new AudioPlayer(*_audioSourceUrl, *_i2sOut, *_multiDecoder);
-        
+    _audioPlayer = new AudioPlayer(*_audioSourceUrl, *_i2sOut, *_multiDecoder);        
     _audioPlayer->setVolume(config->volume); // Set volume from config
+    _audioPlayer->setBufferSize(kPlayerCopyBufferSize);
+    _audioPlayer->setReference(this);
+    _audioPlayer->setOnStreamChangeCallback(HandleStreamChange);
 
     Serial.println("=== AudioOut setup complete ===");
 }
@@ -152,8 +155,11 @@ void AudioOut::Tick()
     {
         Serial.print("Starting channel: ");
         Serial.println(_channels[_currentChannel].url);
-        _audioPlayer->begin(_currentChannel);
-        _isPlaying = true;
+            _isPlaying = _audioPlayer->begin(_currentChannel);
+            if (!_isPlaying)
+            {
+                Serial.println("Audio start failed; will retry on next tick");
+            }
     }
 
     _audioPlayer->copy();
@@ -162,4 +168,31 @@ void AudioOut::Tick()
 bool AudioOut::IsPlaying()
 {
     return _isPlaying && _audioPlayer != nullptr && _audioPlayer->isActive();
+}
+
+void AudioOut::HandleStreamChange(Stream* stream, void* reference)
+{
+    (void)stream;
+    AudioOut* self = static_cast<AudioOut*>(reference);
+    if (self != nullptr)
+    {
+        self->OnStreamChanged(stream);
+    }
+}
+
+void AudioOut::OnStreamChanged(Stream* stream)
+{
+    if (stream == nullptr) return;
+    if (_audioSourceUrl == nullptr || _channels == nullptr || _channelCount <= 0) return;
+
+    int idx = _audioSourceUrl->index();
+    if (idx < 0 || idx >= _channelCount) return;
+
+    // Update current and pending channel to the new index
+    // Keep callback non-destructive: do not override a user-requested channel.
+    // We only sync current channel when the stream index matches the pending selection.
+    if (idx == _pendingChannel)
+    {
+        _currentChannel = idx;
+    }
 }
