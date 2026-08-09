@@ -15,7 +15,12 @@ RadioConfig* radioConfig;
 
 TaskHandle_t DeviceTask = NULL;
 
+static const bool kWifiSignalTestMode = false;
+static const unsigned long kRssiLogIntervalMs = 2000;
+static unsigned long lastRssiLogMs = 0;
+
 void ProcessDevices(void* parameter);
+static void LogWifiSignal();
 
 void setup()
 {
@@ -42,11 +47,18 @@ void setup()
     Serial.println("WiFi connected!");
     Serial.print("IP: ");
     Serial.println(WiFi.localIP());
+    LogWifiSignal();
   }
   else
   {
     Serial.println("WiFi connection failed - restarting...");
     ESP.restart();
+  }
+
+  if (kWifiSignalTestMode)
+  {
+    Serial.println("WiFi signal test mode active - radio startup disabled");
+    return;
   }
 
   // AAC support requires PSRAM due to the larger buffers
@@ -81,6 +93,17 @@ void setup()
 
 void loop()
 {
+  if (kWifiSignalTestMode)
+  {
+    unsigned long now = millis();
+    if (now - lastRssiLogMs >= kRssiLogIntervalMs)
+    {
+      lastRssiLogMs = now;
+      LogWifiSignal();
+    }
+    return;
+  }
+
   // Only process audio in the main loop (core 1)
   if (audioOut != nullptr) audioOut->Tick();
 }
@@ -95,4 +118,18 @@ void ProcessDevices(void* parameter)
 
     vTaskDelay(pdMS_TO_TICKS(5));
   }
+}
+
+static void LogWifiSignal()
+{
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("WiFi status: disconnected");
+    return;
+  }
+
+  long rssiDbm = WiFi.RSSI();
+  Serial.print("WiFi RSSI: ");
+  Serial.print(rssiDbm);
+  Serial.println(" dBm");
 }
