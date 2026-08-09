@@ -48,6 +48,7 @@ void AudioOut::Setup(RadioConfig* config)
     _urlStream = new URLStreamBuffered();
     _urlStream->setBufferSize(kUrlBufferSize, kUrlBufferCount);
     _audioSourceUrl = new AudioSourceDynamicURL(*_urlStream, nullptr, _currentChannel);
+    _audioSourceUrl->setTimeoutAutoNext(60000);
 
     // Add all the URLs to the dynamic source
     for (int i = 0; i < _channelCount; i++)
