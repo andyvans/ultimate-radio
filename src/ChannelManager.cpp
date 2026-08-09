@@ -5,7 +5,8 @@
 const ChannelConfig ChannelManager::_defaultChannels[] = {
     {const_cast<char*>("https://admin.stream.rinse.fm/proxy/rinse_uk/stream"), const_cast<char*>("Rinse FM UK")},
     {const_cast<char*>("http://stream.srg-ssr.ch/srgssr/rsj/mp3/128"), const_cast<char*>("Radio Swiss Jazz")},
-    {const_cast<char*>("https://streaming.brol.tech/rtfmlounge"), const_cast<char*>("RTFM Lounge")},
+    {const_cast<char*>("https://28903.live.streamtheworld.com/NZME_01AAC/HLS/playlist.m3u8"), const_cast<char*>("1ZB")},
+    {const_cast<char*>("https://streaming.brol.tech/rtfmlounge"), const_cast<char*>("RTFM Lounge")},    
     {const_cast<char*>("http://streaming.swisstxt.ch/m/drsvirus/mp3_128"), const_cast<char*>("Dr Virus")},
     {const_cast<char*>("http://livestreaming-node-1.srg-ssr.ch/srgssr/couleur3/mp3/128"), const_cast<char*>("Couleur Swiss Radio")}
 };

@@ -15,9 +15,10 @@ RadioConfig* radioConfig;
 
 TaskHandle_t DeviceTask = NULL;
 
-static const bool kWifiSignalTestMode = false;
-static const unsigned long kRssiLogIntervalMs = 2000;
-static unsigned long lastRssiLogMs = 0;
+static const bool _useLocalConfig = true;
+static const bool _wifiSignalTestMode = false;
+static const unsigned long _rssiLogIntervalMs = 2000;
+static unsigned long _lastRssiLogMs = 0;
 
 void ProcessDevices(void* parameter);
 static void LogWifiSignal();
@@ -55,7 +56,7 @@ void setup()
     ESP.restart();
   }
 
-  if (kWifiSignalTestMode)
+  if (_wifiSignalTestMode)
   {
     Serial.println("WiFi signal test mode active - radio startup disabled");
     return;
@@ -67,7 +68,7 @@ void setup()
     Serial.println("No PSRAM detected - AAC support disabled");
 
   radioConfig = ChannelManager::LoadChannels(CONFIG_URL);
-  if (radioConfig == nullptr)
+  if (radioConfig == nullptr || _useLocalConfig)
   {
     Serial.println("Using default channels");
     radioConfig = ChannelManager::GetDefaultChannels();
@@ -93,12 +94,12 @@ void setup()
 
 void loop()
 {
-  if (kWifiSignalTestMode)
+  if (_wifiSignalTestMode)
   {
     unsigned long now = millis();
-    if (now - lastRssiLogMs >= kRssiLogIntervalMs)
+    if (now - _lastRssiLogMs >= _rssiLogIntervalMs)
     {
-      lastRssiLogMs = now;
+      _lastRssiLogMs = now;
       LogWifiSignal();
     }
     return;
