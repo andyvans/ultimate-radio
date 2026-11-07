@@ -14,23 +14,21 @@
 #include <AudioTools/AudioCodecs/CodecMP3Helix.h>
 #include <AudioTools/AudioCodecs/CodecAACHelix.h>
 #include <AudioTools/AudioCodecs/MultiDecoder.h>
+#include <AudioTools/Communication/HLSStream.h>
+#include <AudioTools/AudioCodecs/CodecMTS.h>
+#include <AudioTools/Concurrency/RTOS.h>
 #include "ConfigLoader.h"
 
 using namespace audio_tools;
 
-enum AudioMode
-{
-    AUDIO_MODE_OFF,
-    AUDIO_MODE_RADIO,
-};
-
 class AudioOut
 {
 public:
-    // Streaming buffer tuning: prefer smaller chunks with more buffers.
     static constexpr int kUrlBufferSize = 1024;
-    static constexpr int kUrlBufferCount = 64;
+    static constexpr int kHlsBufferSize = 50 * 1024;
+    static constexpr int kFallbackBufferSize = 10 * 1024;
     static constexpr int kPlayerCopyBufferSize = 4096;
+    static constexpr int kRetryDelayMs = 2000;
 
     AudioOut(bool supportAac);
     ~AudioOut();
@@ -41,30 +39,42 @@ public:
     int GetChannelCount();
     int GetCurrentChannel();
     const char* GetChannelName(int channel) const;
-    AudioMode GetMode();
+    bool IsStarted();
     bool IsPlaying();
 
 private:
-    volatile AudioMode _mode;
+    volatile bool _isStarted;
     volatile int _currentChannel;
     volatile int _pendingChannel;
     volatile bool _isPlaying;
     bool _usingDynamicChannels;
     bool _supportAac;
 
-    URLStreamBuffered* _urlStream;
-    AudioSourceDynamicURL* _audioSourceUrl;
-    I2SStream* _i2sOut;
-    MP3DecoderHelix* _mp3Decoder;
-    AACDecoderHelix* _aacDecoder;
-    MultiDecoder* _multiDecoder;
-    AudioPlayer* _audioPlayer;
+    HLSStream* _urlStream = nullptr;
+    I2SStream* _i2sOut = nullptr;
+    MP3DecoderHelix* _mp3Decoder = nullptr;
+    AACDecoderHelix* _aacDecoder = nullptr;
+    MTSDecoder* _mtsDecoder = nullptr;
+    MultiDecoder* _multiDecoder = nullptr;
+    VolumeStream* _volumeOut = nullptr;
+    EncodedAudioOutput* _decodedOut = nullptr;
+    BufferRTOS<uint8_t> _buffer{0};
+    QueueStream<uint8_t> _queue{_buffer};
+    StreamCopy* _copierPlay = nullptr;
+    Task _writeTask{"hls-write", 8 * 1024, 10, 0};
+    MutexRTOS _writeMutex;
+    uint8_t _writeBuffer[kUrlBufferSize];
+    // Channel requested by Tick(); -1 means stopped
+    volatile int _requestedChannel = -1;
+    // Channel the writer task has open; -1 means none
+    volatile int _streamChannel = -1;
+    // Incremented on every request so the writer can drop stale data
+    volatile uint32_t _requestGen = 0;
 
     // Channel storage
     ChannelConfig* _channels;
     int _channelCount;
     static const int _defaultChannelCount;
 
-    static void HandleStreamChange(Stream* stream, void* reference);
-    void OnStreamChanged(Stream* stream);
+    void WriteLoop();
 };

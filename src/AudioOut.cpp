@@ -6,7 +6,7 @@ AudioOut::AudioOut(bool supportAac)
     _supportAac = supportAac;
     _currentChannel = 0;
     _pendingChannel = 0;
-    _mode = AUDIO_MODE_OFF;
+    _isStarted = false;
     _isPlaying = false;
     _usingDynamicChannels = false;
     _channels = nullptr;
@@ -15,7 +15,16 @@ AudioOut::AudioOut(bool supportAac)
 
 AudioOut::~AudioOut()
 {
-    // Note: Dynamic channel memory is managed by RadioConfig
+    _writeTask.remove();
+    delete _copierPlay;
+    delete _decodedOut;
+    delete _volumeOut;
+    delete _multiDecoder;
+    delete _mtsDecoder;
+    delete _aacDecoder;
+    delete _mp3Decoder;
+    delete _i2sOut;
+    delete _urlStream;
 }
 
 void AudioOut::Setup(RadioConfig* config)
@@ -46,21 +55,20 @@ void AudioOut::Setup(RadioConfig* config)
     AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Warning);
 #endif   
 
-    Serial.println("Creating URLStream...");
-    _urlStream = new URLStreamBuffered();
-    _urlStream->setBufferSize(kUrlBufferSize, kUrlBufferCount);
-    _audioSourceUrl = new AudioSourceDynamicURL(*_urlStream, nullptr, _currentChannel);
-    _audioSourceUrl->setTimeoutAutoNext(60000);
-
-    // Add all the URLs to the dynamic source
-    for (int i = 0; i < _channelCount; i++)
+    Serial.println("Creating buffered HLS stream...");
+    _urlStream = new HLSStream();
+    _buffer.setReadMaxWait(0);
+    _buffer.setWriteMaxWait(0);
+    if (!_buffer.resize(_supportAac ? kHlsBufferSize : kFallbackBufferSize))
     {
-        _audioSourceUrl->addURL(_channels[i].url);
+        Serial.println("Could not allocate HLS buffer");
+        return;
     }
 
     Serial.println("Creating decoders...");
     _mp3Decoder = new MP3DecoderHelix();
     _aacDecoder = _supportAac ? new AACDecoderHelix() : nullptr;
+    _mtsDecoder = _supportAac ? new MTSDecoder(*_aacDecoder) : nullptr;
 
     Serial.println("Creating MultiDecoder...");
     _multiDecoder = new MultiDecoder(*_urlStream);
@@ -70,6 +78,7 @@ void AudioOut::Setup(RadioConfig* config)
     {
         _multiDecoder->addDecoder(*_aacDecoder, "audio/aac");
         _multiDecoder->addDecoder(*_aacDecoder, "audio/aacp");
+        _multiDecoder->addDecoder(*_mtsDecoder, "video/mp2t");
     }
 
     Serial.println("Creating I2S stream...");
@@ -84,12 +93,22 @@ void AudioOut::Setup(RadioConfig* config)
     Serial.println("Starting I2S stream...");
     _i2sOut->begin(configOut);
 
-    Serial.println("Creating audio player...");
-    _audioPlayer = new AudioPlayer(*_audioSourceUrl, *_i2sOut, *_multiDecoder);        
-    _audioPlayer->setVolume(config->volume); // Set volume from config
-    _audioPlayer->setBufferSize(kPlayerCopyBufferSize);
-    _audioPlayer->setReference(this);
-    _audioPlayer->setOnStreamChangeCallback(HandleStreamChange);
+    Serial.println("Creating buffered playback pipeline...");
+    _volumeOut = new VolumeStream(*_i2sOut);
+    auto volumeConfig = _volumeOut->defaultConfig();
+    volumeConfig.volume = config->volume;
+    _volumeOut->begin(volumeConfig);
+    _decodedOut = new EncodedAudioOutput(_volumeOut, _multiDecoder);
+    _copierPlay = new StreamCopy(*_decodedOut, _queue);
+    _copierPlay->resize(kPlayerCopyBufferSize);
+
+    if (!_writeTask.begin([this]() { WriteLoop(); }))
+    {
+        Serial.println("Could not start HLS writer task");
+        delete _copierPlay;
+        _copierPlay = nullptr;
+        return;
+    }
 
     Serial.println("=== AudioOut setup complete ===");
 }
@@ -121,81 +140,104 @@ void AudioOut::Start(int channel)
         Serial.println(_channels[channel].url);
         _pendingChannel = channel;
     }
-    _mode = AUDIO_MODE_RADIO;
+    _isStarted = true;
 }
 
 void AudioOut::Stop()
 {
-    _mode = AUDIO_MODE_OFF;
+    _isStarted = false;
 }
 
-AudioMode AudioOut::GetMode()
+bool AudioOut::IsStarted()
 {
-    return _mode;
+    return _isStarted;
 }
 
 void AudioOut::Tick()
 {
-    if (_audioPlayer == nullptr) return;
+    if (_copierPlay == nullptr) return;
     if (_channels == nullptr || _channelCount <= 0) return;
 
-    if (_mode == AUDIO_MODE_OFF && _isPlaying)
+    int target = _isStarted ? _pendingChannel : -1;
+    if (target != _requestedChannel)
     {
-        Serial.println("Stopping audio playback");
-        _audioPlayer->end();
-        _isPlaying = false;
+        if (_requestedChannel >= 0) _decodedOut->end();
+
+        // The writer only holds this lock while copying into the queue, never during network I/O
+        _writeMutex.lock();
+        _requestGen++;
+        _requestedChannel = target;
+        _queue.end();
+        _buffer.reset();
+        if (target >= 0) _queue.begin(100);
+        _writeMutex.unlock();
+
+        if (target >= 0)
+        {
+            _currentChannel = target;
+            Serial.print("Starting channel: ");
+            Serial.println(_channels[target].url);
+            if (!_decodedOut->begin()) Serial.println("Could not start decoder");
+            _copierPlay->begin();
+        }
     }
 
-    if (_pendingChannel != _currentChannel)
-    {
-        _currentChannel = _pendingChannel;
-        Serial.print("Switching to channel: ");
-        Serial.println(_channels[_currentChannel].url);
-        _audioPlayer->setIndex(_currentChannel);
-    }
-
-    if (_mode == AUDIO_MODE_RADIO && !_isPlaying)
-    {
-        Serial.print("Starting channel: ");
-        Serial.println(_channels[_currentChannel].url);
-            _isPlaying = _audioPlayer->begin(_currentChannel);
-            if (!_isPlaying)
-            {
-                Serial.println("Audio start failed; will retry on next tick");
-            }
-    }
-
-    _audioPlayer->copy();
+    _isPlaying = _requestedChannel >= 0 && _streamChannel == _requestedChannel;
+    if (_requestedChannel >= 0) _copierPlay->copy();
 }
 
 bool AudioOut::IsPlaying()
 {
-    return _isPlaying && _audioPlayer != nullptr && _audioPlayer->isActive();
+    return _isPlaying;
 }
 
-void AudioOut::HandleStreamChange(Stream* stream, void* reference)
+void AudioOut::WriteLoop()
 {
-    (void)stream;
-    AudioOut* self = static_cast<AudioOut*>(reference);
-    if (self != nullptr)
+    _writeMutex.lock();
+    int channel = _requestedChannel;
+    uint32_t gen = _requestGen;
+    _writeMutex.unlock();
+
+    if (channel != _streamChannel)
     {
-        self->OnStreamChanged(stream);
+        if (_streamChannel >= 0)
+        {
+            _urlStream->end();
+            _streamChannel = -1;
+        }
+        if (channel < 0)
+        {
+            delay(10);
+            return;
+        }
+        if (!_urlStream->begin(_channels[channel].url))
+        {
+            _urlStream->end();
+            Serial.println("Audio start failed; retrying");
+            delay(kRetryDelayMs);
+            return;
+        }
+        _streamChannel = channel;
     }
-}
 
-void AudioOut::OnStreamChanged(Stream* stream)
-{
-    if (stream == nullptr) return;
-    if (_audioSourceUrl == nullptr || _channels == nullptr || _channelCount <= 0) return;
-
-    int idx = _audioSourceUrl->index();
-    if (idx < 0 || idx >= _channelCount) return;
-
-    // Update current and pending channel to the new index
-    // Keep callback non-destructive: do not override a user-requested channel.
-    // We only sync current channel when the stream index matches the pending selection.
-    if (idx == _pendingChannel)
+    if (channel < 0 || _buffer.availableForWrite() < kUrlBufferSize)
     {
-        _currentChannel = idx;
+        delay(1);
+        return;
     }
+
+    size_t len = _urlStream->readBytes(_writeBuffer, kUrlBufferSize);
+    if (len > 0)
+    {
+        _writeMutex.lock();
+        // Drop data read for a channel that has since been changed or stopped
+        if (gen == _requestGen)
+        {
+            _queue.write(_writeBuffer, len);
+            // Writes stop with less than kUrlBufferSize free, so the queue's 100% threshold is never reached
+            if (!_queue && _buffer.availableForWrite() < kUrlBufferSize) _queue.begin();
+        }
+        _writeMutex.unlock();
+    }
+    delay(1);
 }

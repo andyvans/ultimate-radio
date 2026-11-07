@@ -4,6 +4,7 @@
 #include "DeviceControls.h"
 #include "DeckLight.h"
 #include "ChannelManager.h"
+#include "WifiSignalTest.h"
 
 // Configuration URL - change this to your config file location
 #define CONFIG_URL "https://raw.githubusercontent.com/andyvans/ultimate-radio/main/radio-config.txt"
@@ -15,12 +16,9 @@ RadioConfig* radioConfig;
 
 TaskHandle_t DeviceTask = NULL;
 
-static const bool kWifiSignalTestMode = false;
-static const unsigned long kRssiLogIntervalMs = 2000;
-static unsigned long lastRssiLogMs = 0;
+static const bool _useLocalConfig = true;
 
 void ProcessDevices(void* parameter);
-static void LogWifiSignal();
 
 void setup()
 {
@@ -29,9 +27,9 @@ void setup()
 
   Serial.println("\n\n=== Ultimate Radio Starting ===");
 
-  Serial.printf("Free heap: %u bytes\n", ESP.getFreeHeap());
-  Serial.printf("PSRAM size: %u bytes\n", ESP.getPsramSize());
-  Serial.printf("Free PSRAM: %u bytes\n", ESP.getFreePsram());
+  //Serial.printf("Free heap: %u bytes\n", ESP.getFreeHeap());
+  //Serial.printf("PSRAM size: %u bytes\n", ESP.getPsramSize());
+  //Serial.printf("Free PSRAM: %u bytes\n", ESP.getFreePsram());
 
   deckLight = new DeckLight();
   deckLight->Setup();
@@ -55,7 +53,7 @@ void setup()
     ESP.restart();
   }
 
-  if (kWifiSignalTestMode)
+  if (WifiSignalTestMode)
   {
     Serial.println("WiFi signal test mode active - radio startup disabled");
     return;
@@ -67,7 +65,7 @@ void setup()
     Serial.println("No PSRAM detected - AAC support disabled");
 
   radioConfig = ChannelManager::LoadChannels(CONFIG_URL);
-  if (radioConfig == nullptr)
+  if (radioConfig == nullptr || _useLocalConfig)
   {
     Serial.println("Using default channels");
     radioConfig = ChannelManager::GetDefaultChannels();
@@ -93,14 +91,9 @@ void setup()
 
 void loop()
 {
-  if (kWifiSignalTestMode)
+  if (WifiSignalTestMode)
   {
-    unsigned long now = millis();
-    if (now - lastRssiLogMs >= kRssiLogIntervalMs)
-    {
-      lastRssiLogMs = now;
-      LogWifiSignal();
-    }
+    WifiSignalTestTick();
     return;
   }
 
@@ -118,18 +111,4 @@ void ProcessDevices(void* parameter)
 
     vTaskDelay(pdMS_TO_TICKS(5));
   }
-}
-
-static void LogWifiSignal()
-{
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.println("WiFi status: disconnected");
-    return;
-  }
-
-  long rssiDbm = WiFi.RSSI();
-  Serial.print("WiFi RSSI: ");
-  Serial.print(rssiDbm);
-  Serial.println(" dBm");
 }

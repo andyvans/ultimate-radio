@@ -45,7 +45,7 @@ void DeviceControls::Tick()
     if (digitalRead(AMP_BLUETOOTH_PIN) == HIGH)
     {
         // Bluetooth mode active - stop audio
-        if (_audioOut->GetMode() == AUDIO_MODE_RADIO)
+        if (_audioOut->IsStarted())
         {
             Serial.println("Bluetooth mode active - stopping audio");
             _audioOut->Stop();
@@ -54,7 +54,7 @@ void DeviceControls::Tick()
         return;
     }
 
-    if (_audioOut->GetMode() == AUDIO_MODE_OFF) {
+    if (!_audioOut->IsStarted()) {
         Serial.println("Exiting bluetooth mode - starting audio");
         _deckLight->DisplayLine(_currentChannel);
         _audioOut->Start(_currentChannel);
